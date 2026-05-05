@@ -10,6 +10,12 @@ app.get('/', (req, res) =>{
     res.send('funcionando ');
 });
 
+app.get("/deudas", (req, res) => {
+  res.json([
+    { nombre: "Juan", monto: 500, estado: "pendiente" }
+  ]);
+});
+
 app.listen(port, ()=>{
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });

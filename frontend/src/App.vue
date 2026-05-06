@@ -1,6 +1,7 @@
 <script setup>
 	import { ref, onMounted } from "vue";
 	const deudas = ref([]);
+	//Prueba para leer el json que se mando desde el back
 	onMounted(() => {
   		fetch("http://localhost:3000/deudas")
 		.then(res => res.json())

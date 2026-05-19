@@ -1,17 +1,25 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router';
 
-import LoginView from '../views/LoginView.vue'
-import PrestamosView from '../views/PrestamosView.vue'
+const LoginView = () => import('../views/Login.vue');
+const PrestamosView = () => import('../views/PrestamosView.vue');
+const RegisterView = () => import('../views/RegisterView.vue');
 
 const routes = [
-  {
-    path: '/',
-    component: LoginView
-  },
-  {
-    path: '/prestamos',
-    component: PrestamosView
-  }
+	{
+		path: '/',
+		name: 'Login',
+		component: LoginView
+	},
+  	{
+    	path: '/prestamos',
+		name: "Prestamos",
+    	component: PrestamosView
+  	},
+	{
+		path: '/registro',
+		name: 'Registro',
+		component: RegisterView
+	}
 ]
 
 const router = createRouter({

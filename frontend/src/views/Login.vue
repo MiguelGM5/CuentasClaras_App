@@ -1,6 +1,6 @@
 <script setup>
 	import { Mail, Lock, Facebook, Apple, Chrome } from 'lucide-vue-next';
-	import { useRouter } from 'vue-router';
+	import { useRouter, RouterLink } from 'vue-router';
 
 	const router = useRouter()
 </script>

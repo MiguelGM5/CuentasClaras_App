@@ -6,12 +6,12 @@ const User = {
         return rows[0];
     },
     create: async (userData) => {
-        const {nombre, apellido_paterno, apellido_materno, email, password} = userData;
+        const {nombre, apellidoPaterno, apellidoMaterno, email, password} = userData;
         const createQuery = `
             INSERT INTO test.usuarios (nombre, apellido_paterno, apellido_materno, email, password)
             VALUES (?, ?, ?, ?, ?)
         `;
-        const result = await db.execute(createQuery, [nombre, apellido_paterno, apellido_materno, email, password]);
+        const result = await db.execute(createQuery, [nombre, apellidoPaterno, apellidoMaterno, email, password]);
         return result.insertId;
     }
 }

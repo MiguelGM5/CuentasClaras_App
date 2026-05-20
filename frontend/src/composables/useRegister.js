@@ -9,20 +9,20 @@ export function useRegister(){
     const apellidoMaterno = ref('');
     const email = ref('');
     const password = ref('');
-    const confirmPass = ref('');
+    const confirmPassword = ref('');
 
     const loading = ref(false);
 
     const manejadorRegistro = async () => {
         loading.value = true;
-
         try {
             const datosRegistro = {
                 nombre: nombre.value,
                 apellidoPaterno: apellidoPaterno.value,
                 apellidoMaterno: apellidoMaterno.value,
                 email: email.value,
-                password: password.value
+                password: password.value,
+                confirmPassword: confirmPassword.value
             };
 
             const respuesta = await fetch(`${API_URL}/api/register`, {
@@ -66,7 +66,7 @@ export function useRegister(){
         apellidoMaterno,
         email,
         password,
-        confirmPass,
+        confirmPassword,
         loading,
         manejadorRegistro
     };

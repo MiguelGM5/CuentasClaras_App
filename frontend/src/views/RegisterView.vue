@@ -106,7 +106,7 @@
                             <input 
                                 v-model="password"
                                 type="password" 
-                                placeholder="Crea una contraseña segura" 
+                                placeholder="Crea una contraseña (minimo 10 caracteres)" 
                                 class="w-full outline-none text-gray-700 py-1 bg-transparent" 
                             />
                         </div>

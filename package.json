@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/MiguelGM5/Sistema_InfEmpresarial#readme",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",

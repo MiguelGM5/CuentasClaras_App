@@ -69,5 +69,5 @@ export function useRegister(){
         confirmPassword,
         loading,
         manejadorRegistro
-    };
+    }
 }

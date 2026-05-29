@@ -1,7 +1,9 @@
 <script setup>
+    import { ref, computed } from 'vue';
     import { User, Mail, Lock } from 'lucide-vue-next';
     import { RouterLink } from 'vue-router';
-    import { useRegister } from '../composables/useRegister';
+    import { useRegister } from '../../composables/useRegister.js';
+import ValidadorCampos from '../components/registro/ValidadorCampos.vue';
 
     const {
         nombre,
@@ -11,12 +13,17 @@
         password,
         confirmPassword,
         loading,
-        manejadorRegistro
+        validPass,
+        validEmail,
+        validConfirmedPass,
+        validForm,
+        manejadorRegistro,
     } = useRegister();
 
 </script>
 <template>
     <div class="min-h-screen flex items-center justify-center bg-white p-4 font-sans">
+        
         <div class="flex w-full max-w-6xl bg-white overflow-hidden">
             
             <div class="hidden lg:flex w-1/2 flex-col justify-center items-center p-12 bg-[#F9FAFF]">
@@ -35,7 +42,7 @@
 
             <div class="w-full lg:w-1/2 p-8 lg:p-16 flex flex-col justify-center">
                 <h1 class="text-4xl font-bold text-gray-900 mb-2">Crear cuenta</h1>
-                <p class="text-gray-500 mb-1 text-lg">Unite para gestionar tus finanzas sin vueltas</p>
+                <p class="text-gray-500 mb-1 text-lg">Unete para gestionar tus finanzas</p>
                 <p class="mb-8 text-sm">
                     ¿Ya tienes una cuenta? 
                     <RouterLink to="/" class="text-[#00B4B4] font-semibold hover:underline cursor-pointer">
@@ -98,6 +105,7 @@
                             />
                         </div>
                     </div>
+                    <ValidadorCampos :visible="email.length > 0" :requisites="validEmail"/>
 
                     <div class="border-b-2 border-gray-100 py-1 focus-within:border-[#00B4B4] transition-colors">
                         <label class="block text-xs text-gray-400 uppercase font-bold tracking-wider">Contraseña</label>
@@ -106,11 +114,13 @@
                             <input 
                                 v-model="password"
                                 type="password" 
-                                placeholder="Crea una contraseña (minimo 10 caracteres)" 
+                                placeholder="Crea una contraseña" 
                                 class="w-full outline-none text-gray-700 py-1 bg-transparent" 
                             />
                         </div>
                     </div>
+                    
+                    <ValidadorCampos :visible="password.length > 0" :requisites="validPass"/>
 
                     <div class="border-b-2 border-gray-100 py-1 focus-within:border-[#00B4B4] transition-colors">
                         <label class="block text-xs text-gray-400 uppercase font-bold tracking-wider">Confirmar Contraseña</label>
@@ -124,9 +134,10 @@
                             />
                         </div>
                     </div>
+                    <ValidadorCampos :visible="confirmPassword.length > 0" :requisites="validConfirmedPass"/>
 
                     <button 
-                        :disabled="loading"
+                        :disabled="loading || !validForm"
                         class="w-full bg-[#00B4B4] text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-100 hover:bg-[#009291] transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:transform-none disabled:cursor-not-allowed"
                     >
                         {{ loading ? 'Creando cuenta...' : 'Registrarme' }}

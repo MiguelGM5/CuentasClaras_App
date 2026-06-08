@@ -28,7 +28,7 @@ const routes = [
 		path: '/admin/dashboard',
 		name: 'Admin',
 		component: AdminDashboardView,
-		meta:{requiresAuth: true, rolesPermitidos: ["super_admin"]}
+		//meta:{requiresAuth: true, rolesPermitidos: ["super_admin"]}
 	},
 	{
 		path: '/premium/dashboard',

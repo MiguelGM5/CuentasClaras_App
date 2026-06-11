@@ -34,13 +34,13 @@ const routes = [
 		path: '/premium/dashboard',
 		name: 'Premium',
 		component: PremiumDashboardView,
-		meta:{requiresAuth: true, rolesPermitidos: ["premium", "super_admin"]}
+		//meta:{requiresAuth: true, rolesPermitidos: ["premium", "super_admin"]}
 	},
 	{
 		path: '/user/dashboard',
 		name: 'Free',
 		component: FreeDashboardView,
-		meta:{requiresAuth: true, rolesPermitidos: ["user", "premium", "super_admin"]}
+		//meta:{requiresAuth: true, rolesPermitidos: ["user", "premium", "super_admin"]}
 	}
 ]
 

@@ -4,10 +4,19 @@ import Swal from 'sweetalert2';
 export function useFinance() {
     //Datos Haardcodeados
     const movimientos = ref([
+        // Ingresos viejos (fuera del rango de 7 días, no salen en la gráfica pero suman al total)
         { id: 1, tipo: "ingreso", categoria: "Sueldo", descripcion: "Quincena", monto: 12000, fecha: "2026-06-01" },
+        
+        // Gastos
         { id: 2, tipo: "gasto", categoria: "Alimentación", descripcion: "Walmart", monto: 1500, fecha: "2026-06-05" },
         { id: 3, tipo: "gasto", categoria: "Servicios", descripcion: "Internet", monto: 600, fecha: "2026-06-06" },
-        { id: 4, tipo: "ingreso", categoria: "Ventas", descripcion: "Venta teclado viejo", monto: 800, fecha: "2026-06-08" }
+        
+        // 🔥 INGRESOS NUEVOS (Para llenar el Histograma) 🔥
+        { id: 4, tipo: "ingreso", categoria: "Ventas", descripcion: "Venta teclado", monto: 800, fecha: "2026-06-04" },
+        { id: 5, tipo: "ingreso", categoria: "Ventas", descripcion: "Venta monitor", monto: 2500, fecha: "2026-06-05" },
+        { id: 6, tipo: "ingreso", categoria: "Sueldo", descripcion: "Bono", monto: 1200, fecha: "2026-06-07" },
+        { id: 7, tipo: "ingreso", categoria: "Ventas", descripcion: "Juego de PS5", monto: 950, fecha: "2026-06-08" },
+        { id: 8, tipo: "ingreso", categoria: "Sueldo", descripcion: "Reintegro obra social", monto: 3400, fecha: "2026-06-09" }
     ]);
 
     const prestamos = ref([

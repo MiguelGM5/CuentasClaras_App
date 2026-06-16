@@ -2,10 +2,11 @@
 	import { LogOut } from 'lucide-vue-next';
 
 	defineProps({
-		modelValue: { type: String, required: true }, // Tab activo
-		subtitulo:  { type: String, default: 'Finanzas' }, // Ej: "Panel Admin", "Plan Free", "Premium"
-		items:      { type: Array, required: true },    // Array de rutas [{ key, label, icon }]
-		usuario:    { type: Object, required: true }    // { nombre, email, inicial }
+		modelValue: { type: String, required: true }, 
+		subtitulo:  { type: String, default: 'Finanzas' }, 
+		items:      { type: Array, required: true },    
+		usuario:    { type: Object, required: true },
+		isPremium: { type: Boolean, default: false }    
 	});
 
 	defineEmits(['update:modelValue', 'logout']);
@@ -18,12 +19,15 @@
         		<div class="w-9 h-9 bg-[#00B4B4] rounded-xl flex items-center justify-center shadow-md shadow-teal-100 flex-shrink-0">
           			<div class="w-4 h-4 bg-white rounded-sm"></div>
         		</div>
-        		<div>
-          			<p class="font-black text-[#001D3D] leading-tight">Cuentas Claras</p>
-          			<p class="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-            			{{ subtitulo }}
-          			</p>
-        		</div>
+        		<div class="flex flex-col items-start">
+    				<p class="font-black text-[#001D3D] leading-tight">Cuentas Claras</p>
+    				<span 
+        				class="text-[9px] font-black uppercase tracking-widest mt-0.5 rounded-md transition-colors"
+        				:class="isPremium ? 'bg-amber-100 text-amber-600 px-2 py-0.5' : 'text-slate-400'"
+    				>
+        				{{ subtitulo }}
+    				</span>
+				</div>
       		</div>
     	</div>
 

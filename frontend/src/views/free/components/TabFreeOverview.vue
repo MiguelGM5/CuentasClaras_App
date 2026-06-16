@@ -3,19 +3,20 @@
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
             <div>
                 <h1 class="text-3xl font-black text-slate-800 tracking-tight">Mi Resumen</h1>
-                <p class="text-md text-slate-400 mt-1">Controlá tu plata, no dejes que ella te controle.</p>
+                <p class="text-sm text-slate-400 mt-1">Controlá tu plata, no dejes que ella te controle.</p>
             </div>
+
             <div class="flex flex-wrap gap-2">
                 <button @click="$emit('abrirModalMeta')"
-                    class="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold px-4 py-2.5 rounded-xl text-lg flex items-center justify-center gap-2 transition-all">
+                    class="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
                     <Target :size="15" /> Meta
                 </button>
                 <button @click="$emit('abrirModalPrestamo')"
-                    class="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold px-4 py-2.5 rounded-xl text-lg flex items-center justify-center gap-2 transition-all">
+                    class="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
                     <CreditCard :size="15" /> Préstamo
                 </button>
                 <button @click="$emit('abrirModalMovimiento')"
-                    class="w-full sm:w-auto bg-[#00B4B4] hover:bg-[#009291] text-white font-bold px-5 py-2.5 rounded-xl text-lg flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-all">
+                    class="w-full sm:w-auto bg-[#00B4B4] hover:bg-[#009291] text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-all">
                     <Plus :size="15" /> Movimiento
                 </button>
             </div>
@@ -67,7 +68,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import { Target, CreditCard, Plus, ArrowDownLeft, ArrowUpRight, TrendingUp, DollarSign } from 'lucide-vue-next';
+import { Target, CreditCard, Plus, ArrowDownLeft, ArrowUpRight, TrendingUp, DollarSign, Crown } from 'lucide-vue-next';
 import GastosDonutChart from './GastosDonutChart.vue';
 import MetasBarChart from './MetasBarChart.vue';
 import IngresosHistogram from './IngresosHistogram.vue';

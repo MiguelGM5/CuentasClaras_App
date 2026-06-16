@@ -29,6 +29,11 @@ export function useFinance() {
         { id: 2, titulo: "Viaje a Cancún", montoObjetivo: 25000, montoActual: 3500, fechaLimite: "2027-03-15" }
     ]);
 
+    const pagares = ref([
+        { id: 1, deudor: 'Carlos Martínez', monto: 5000, vencimiento: '2026-07-15', estado: 'Al corriente' },
+        { id: 2, deudor: 'Ana Perea', monto: 9500, vencimiento: '2026-06-01', estado: 'Atrasado' }
+    ])
+
     // ─────────────────────────────────────────
     // 2. MATEMÁTICAS Y ESTADÍSTICAS
     // ─────────────────────────────────────────
@@ -58,7 +63,7 @@ export function useFinance() {
     const registrarMeta = (datos) => { /* Lógica de guardado a BD irá acá */ };
 
     return {
-        movimientos, prestamos, metas,
+        movimientos, prestamos, metas, pagares,
         totalIngresos, totalGastos, saldoActual, gastosPorCategoria,
         totalPrestado, totalDeuda, totalAhorradoEnMetas,
         registrarMovimiento, registrarPrestamo, registrarMeta

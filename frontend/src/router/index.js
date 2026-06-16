@@ -5,7 +5,7 @@ const PrestamosView = () => import('../views/PrestamosView.vue');
 const RegisterView = () => import('../views/auth/RegisterView.vue');
 const AdminDashboardView = ()=> import('../views/admin/adminDashboardView.vue');
 const FreeDashboardView = ()=> import('../views/free/freeDashboardView.vue');
-const PremiumDashboardView = ()=> import('../views/premium/premiumDashboardView.vue');
+//const PremiumDashboardView = ()=> import('../views/premium/premiumDashboardView.vue');
 
 
 const routes = [
@@ -29,12 +29,6 @@ const routes = [
 		name: 'Admin',
 		component: AdminDashboardView,
 		//meta:{requiresAuth: true, rolesPermitidos: ["super_admin"]}
-	},
-	{
-		path: '/premium/dashboard',
-		name: 'Premium',
-		component: PremiumDashboardView,
-		//meta:{requiresAuth: true, rolesPermitidos: ["premium", "super_admin"]}
 	},
 	{
 		path: '/user/dashboard',

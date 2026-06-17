@@ -6,32 +6,6 @@
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <!-- <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <p class="text-lg font-bold text-slate-400 uppercase">Total Registros</p>
-                <p class="text-4xl font-black text-slate-800 mt-1">{{ totalPrestamos }}</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <div class="flex items-center gap-1.5 mb-1">
-                    <ArrowUpRight :size="18" class="text-emerald-500" />
-                    <p class="text-lg font-bold text-emerald-500 uppercase">Monto Prestado</p>
-                </div>
-                <p class="text-4xl font-black text-slate-800">${{ montoPrestado.toLocaleString("es-MX") }}</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <div class="flex items-center gap-1.5 mb-1">
-                    <ArrowDownLeft :size="18" class="text-amber-500" />
-                    <p class="text-lg font-bold text-amber-500 uppercase">Monto Pedido</p>
-                </div>
-                <p class="text-4xl font-black text-slate-800">${{ montoPedido.toLocaleString("es-MX") }}</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <div class="flex items-center gap-1.5 mb-1">
-                    <AlertTriangle :size="18" class="text-orange-500" />
-                    <p class="text-lg font-bold text-orange-500 uppercase">Pendientes</p>
-                </div>
-                <p class="text-4xl font-black text-slate-800">{{ prestamosPendientes }}</p>
-            </div> -->
-
             <StatCard v-for="card in cardsPrestamos" 
                 :key="card.id" 
                 :label="card.label" 

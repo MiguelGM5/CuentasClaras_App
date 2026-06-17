@@ -11,7 +11,6 @@
         </div>
 
         <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-7">
-
             <StatCard v-for="card in cardsUsuarios" 
                 :key="card.id" 
                 :label="card.label" 

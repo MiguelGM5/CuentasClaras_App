@@ -6,18 +6,6 @@
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-            <!-- <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <p class="text-lg font-bold text-slate-400 uppercase">Total Gastos</p>
-                <p class="text-4xl font-black text-slate-800 mt-1">{{ gastos.length }}</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <p class="text-lg font-bold text-amber-500 uppercase">Monto Total</p>
-                <p class="text-4xl font-black text-slate-800 mt-1">${{ totalGastos.toLocaleString("es-MX") }}</p>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <p class="text-lg font-bold text-violet-500 uppercase">Promedio</p>
-                <p class="text-4xl font-black text-slate-800 mt-1">${{ promedioGasto.toLocaleString("es-MX") }}</p>
-            </div> -->
             <StatCard v-for="card in cardsGastos" 
                 :key="card.id" 
                 :label="card.label" 

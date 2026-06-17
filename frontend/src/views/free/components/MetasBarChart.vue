@@ -23,7 +23,7 @@
 				<!-- Textos Inferiores -->
 				<div class="flex justify-between mt-2">
 					<span class="text-sm text-slate-500 font-semibold">
-						Llevás: <span class="text-slate-700">${{ meta.montoActual.toLocaleString("es-MX") }}</span>
+						Llevas: <span class="text-slate-700">${{ meta.montoActual.toLocaleString("es-MX") }}</span>
 					</span>
 					<span class="text-sm text-slate-400 font-semibold">
 						Meta: ${{ meta.montoObjetivo.toLocaleString("es-MX") }}
@@ -35,7 +35,7 @@
 			<div v-if="topMetas.length === 0"
 				class="text-center text-slate-400 text-xs py-4 flex flex-col items-center">
 				<Target :size="24" class="text-slate-300 mb-2" />
-				No tenés metas activas. ¡Creá una!
+				No tienes metas activas. ¡Crea una!
 			</div>
 		</div>
 	</div>

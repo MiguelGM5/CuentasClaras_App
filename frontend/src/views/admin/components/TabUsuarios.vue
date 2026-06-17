@@ -10,12 +10,20 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div v-for="stat in [{ label: 'Total', value: totalUsuarios, color: 'text-slate-800' }, { label: 'Free', value: cntFree, color: 'text-teal-600' }, { label: 'Premium', value: cntPremium, color: 'text-[#001D3D]' }, { label: 'Activos', value: cntActivos, color: 'text-green-600' }]"
-                :key="stat.label" class="bg-white rounded-xl p-4 border border-slate-100">
-                <p class="text-[11px] font-bold text-slate-400 uppercase">{{ stat.label }}</p>
-                <p :class="['text-2xl font-black mt-1', stat.color]">{{ stat.value }}</p>
-            </div>
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-7">
+
+            <StatCard v-for="card in cardsUsuarios" 
+                :key="card.id" 
+                :label="card.label" 
+                :value="card.value" 
+                :icon="card.icon" 
+                :color-texto="card.colorTexto" 
+                :color-bg="card.colorBg"
+            >
+                <template #footer>
+                    {{ card.footer }}
+                </template>
+            </StatCard>
         </div>
 
         <BaseDataTable titulo="Lista de Usuarios" placeholderBuscar="Buscar por nombre, correo o plan..."
@@ -71,11 +79,60 @@
 </template>
 
 <script setup>
-import { Plus, Eye, Pencil, Trash2 } from 'lucide-vue-next';
-import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
+import { computed } from 'vue';
+import { Plus, Eye, Pencil, Trash2, UsersRound, UserRoundCheck, UserStar, UserRound } from 'lucide-vue-next';
 
-defineProps({ usuarios: Array, totalUsuarios: Number, cntFree: Number, cntPremium: Number, cntActivos: Number });
+import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
+import StatCard from './StatCard.vue';
+
+const props = defineProps({ 
+    usuarios: {type: Array, default: () => [] }, 
+    totalUsuarios: {type:Number, default:0}, 
+    cntFree: {type:Number, default:0}, 
+    cntPremium: {type:Number, default:0}, 
+    cntActivos: {type:Number, default:0} 
+});
+
 defineEmits(['abrirCrear', 'abrirVer', 'abrirEditar', 'eliminarUsuario', 'toggleStatus']);
+
+const cardsUsuarios = computed(() => [
+    { 
+        id: 1,
+        label: "Total Usuarios",
+        value: props.totalUsuarios, 
+        icon: UsersRound,
+        colorTexto: "text-indigo-600",
+        colorBg: "bg-indigo-100",
+        footer: `` 
+    },
+    {
+        id: 2,
+        label: "Usuarios Gratis",
+        value: props.cntFree,
+        icon: UserRound,
+        colorTexto: "text-sky-600",
+        colorBg: "bg-sky-100",
+        footer: ``
+    },
+    {
+        id: 3,
+        label: "Usuarios Premium",
+        value: props.cntPremium,
+        icon: UserStar,
+        colorTexto: "text-yellow-600",
+        colorBg: "bg-yellow-100",
+        footer: ``
+    }, 
+    {
+        id: 4,
+        label: "Usuarios Activos",
+        value: props.cntFree,
+        icon: UserRoundCheck,
+        colorTexto: "text-emerald-600",
+        colorBg: "bg-emerald-100",
+        footer: ``
+    }, 
+]);
 
 const columnas = [
     { key: 'usuario', label: 'Usuario' }, { key: 'email', label: 'Correo' }, { key: 'plan', label: 'Plan' },

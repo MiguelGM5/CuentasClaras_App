@@ -6,24 +6,9 @@
         </div>
 
         <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-7">
-            <StatCard label="Total Usuarios" :value="totalUsuarios" :icon="Users">
+            <StatCard v-for="tarjeta in stats" :key="tarjeta.id" :label="tarjeta.label" :value="tarjeta.value" :icon="tarjeta.icon" :color-texto="tarjeta.colorTexto" :color-bg="tarjeta.colorBg">
                 <template #footer>
-                    {{ cntActivos }} activos
-                </template>
-            </StatCard>
-            <StatCard label="Usuarios Premium" :value="cntPremium" :icon="UserStar" colorTexto="text-teal-500" colorBg="bg-teal-50">
-                <template #footer>
-                    {{ totalUsuarios ? ((cntPremium / totalUsuarios) * 100).toFixed(0) : 0 }}% del total
-                </template>
-            </StatCard>
-            <StatCard label="Préstamos Activos" :value="prestamosPendientes" :icon="CreditCard" colorTexto="text-violet-500" colorBg="bg-violet-50">
-                <template #footer>
-                    {{ totalPrestamos }} registros en total
-                </template>
-            </StatCard>
-            <StatCard label="Gasto Total" :value="`$${totalGastos.toLocaleString('es-MX')}`" :icon="Wallet" colorTexto="text-amber-500" colorBg="bg-amber-50">
-                <template #footer>
-                    Promedio ${{ promedioGasto.toLocaleString('es-MX') }}
+                    {{ tarjeta.footer }}
                 </template>
             </StatCard>
         </div>
@@ -36,7 +21,7 @@
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div class="p-5 border-b border-slate-100 flex justify-between items-center">
                 <div>
-                    <h3 class="font-black text-slate-800">Últimos Préstamos</h3>
+                    <h3 class="font-black text-slate-800 text-2xl">Últimos Préstamos</h3>
                 </div>
                 <button @click="$emit('cambiarTab', 'prestamos')"
                     class="text-xs font-bold text-[#00B4B4] hover:underline">
@@ -55,7 +40,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50 text-sm text-slate-600">
-                        <tr v-for="p in prestamos.slice().reverse().slice(0, 5)" :key="p.id" class="hover:bg-slate-50/40 transition-colors">
+                        <tr v-for="p in (prestamos || []).slice().reverse().slice(0, 5)" :key="p.id" class="hover:bg-slate-50/40 transition-colors">
                             <td class="px-5 py-3 font-semibold">{{ p.usuarioNombre }}</td>
                             <td class="px-5 py-3">
                                 <span :class="p.tipo === 'prestado' ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
@@ -85,20 +70,62 @@
 
 <script setup>
 import { Users, UserStar, CreditCard, Wallet } from 'lucide-vue-next';
+import { computed } from 'vue';
 import StatCard from './StatCard.vue';
-import UserDonutChart from '../../../components/dashboard/UserDonutChart.vue';
-import LoansBarChart from '../../../components/dashboard/LoansBarChart.vue';
+import UserDonutChart from './UserDonutChart.vue';
+import LoansBarChart from './LoansBarChart.vue';
 
-defineProps({
-    prestamos: Array, 
-    totalUsuarios: Number, 
-    cntFree: Number, 
-    cntPremium: Number,
-    cntActivos: Number, 
-    totalPrestamos: Number, 
-    prestamosPendientes: Number,
-    totalGastos: Number, 
-    promedioGasto: Number
+const props = defineProps({
+    prestamos: { type: Array, default: () => [] },
+    totalUsuarios: { type: Number, default: 0 }, 
+    cntFree: { type: Number, default: 0 }, 
+    cntPremium: { type: Number, default: 0 },
+    cntActivos: { type: Number, default: 0 }, 
+    totalPrestamos: { type: Number, default: 0 }, 
+    prestamosPendientes: { type: Number, default: 0 },
+    totalGastos: { type: Number, default: 0 }, 
+    promedioGasto: { type: Number, default: 0 }
 });
+
 defineEmits(['cambiarTab']);
+
+const stats = computed( () => [
+    {
+        id: 1,
+        label: "Total Usuarios",
+        value: props.totalUsuarios, 
+        icon: Users,
+        colorTexto: "text-indigo-600",
+        colorBg: "bg-indigo-100",
+        footer: `${props.cntActivos} activos`
+    },
+    {
+        id: 2,
+        label: "Usuarios Premium",
+        value: props.cntPremium,
+        icon: UserStar,
+        colorTexto: "text-yellow-600",
+        colorBg: "bg-yellow-100",
+        footer: `${props.totalUsuarios ? ((props.cntPremium / props.totalUsuarios) * 100).toFixed(0) : 0}% del total`
+    },
+    {
+        id: 3,
+        label: "Préstamos Activos",
+        value: props.prestamosPendientes,
+        icon: CreditCard,
+        colorTexto: "text-violet-600",
+        colorBg: "bg-violet-100",
+        footer: `${props.totalPrestamos} registros en total`
+    },
+    {
+        id: 4,
+        label: "Gasto Total",
+        value: `$${props.totalGastos.toLocaleString('es-MX')}`,
+        icon: Wallet,
+        colorTexto: "text-rose-600",
+        colorBg: "bg-rose-100",
+        footer: `Promedio $${props.promedioGasto.toLocaleString('es-MX')}`
+    }
+]);
+
 </script>

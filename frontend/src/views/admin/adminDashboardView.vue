@@ -87,7 +87,13 @@ const cerrarSesion = () => {
 <template>
 	<div class="min-h-screen bg-slate-50 flex font-sans">
 
-		<Sidebar v-model="tabActivo" subtitulo="Panel Admin" :items="menuAdmin" :usuario="datosAdminLogueado" @logout="cerrarSesion" @irAPerfil="router.push('/perfil')"
+		<Sidebar 
+			v-model="tabActivo" 
+			subtitulo="Panel Admin" 
+			:items="menuAdmin" 
+			:usuario="datosAdminLogueado" 
+			@logout="cerrarSesion" 
+			@irAPerfil="router.push('/admin/perfil')"
 		/>
 
 		<main class="ml-60 flex-1 p-8 min-h-screen">

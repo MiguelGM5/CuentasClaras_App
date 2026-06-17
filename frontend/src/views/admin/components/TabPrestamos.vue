@@ -6,31 +6,44 @@
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <p class="text-[11px] font-bold text-slate-400 uppercase">Total Registros</p>
-                <p class="text-2xl font-black text-slate-800 mt-1">{{ totalPrestamos }}</p>
+            <!-- <div class="bg-white p-4 rounded-xl border border-slate-100">
+                <p class="text-lg font-bold text-slate-400 uppercase">Total Registros</p>
+                <p class="text-4xl font-black text-slate-800 mt-1">{{ totalPrestamos }}</p>
             </div>
             <div class="bg-white p-4 rounded-xl border border-slate-100">
                 <div class="flex items-center gap-1.5 mb-1">
-                    <ArrowUpRight :size="13" class="text-emerald-500" />
-                    <p class="text-[11px] font-bold text-emerald-500 uppercase">Monto Prestado</p>
+                    <ArrowUpRight :size="18" class="text-emerald-500" />
+                    <p class="text-lg font-bold text-emerald-500 uppercase">Monto Prestado</p>
                 </div>
-                <p class="text-2xl font-black text-slate-800">${{ montoPrestado.toLocaleString("es-MX") }}</p>
+                <p class="text-4xl font-black text-slate-800">${{ montoPrestado.toLocaleString("es-MX") }}</p>
             </div>
             <div class="bg-white p-4 rounded-xl border border-slate-100">
                 <div class="flex items-center gap-1.5 mb-1">
-                    <ArrowDownLeft :size="13" class="text-amber-500" />
-                    <p class="text-[11px] font-bold text-amber-500 uppercase">Monto Pedido</p>
+                    <ArrowDownLeft :size="18" class="text-amber-500" />
+                    <p class="text-lg font-bold text-amber-500 uppercase">Monto Pedido</p>
                 </div>
-                <p class="text-2xl font-black text-slate-800">${{ montoPedido.toLocaleString("es-MX") }}</p>
+                <p class="text-4xl font-black text-slate-800">${{ montoPedido.toLocaleString("es-MX") }}</p>
             </div>
             <div class="bg-white p-4 rounded-xl border border-slate-100">
                 <div class="flex items-center gap-1.5 mb-1">
-                    <AlertTriangle :size="13" class="text-orange-500" />
-                    <p class="text-[11px] font-bold text-orange-500 uppercase">Pendientes</p>
+                    <AlertTriangle :size="18" class="text-orange-500" />
+                    <p class="text-lg font-bold text-orange-500 uppercase">Pendientes</p>
                 </div>
-                <p class="text-2xl font-black text-slate-800">{{ prestamosPendientes }}</p>
-            </div>
+                <p class="text-4xl font-black text-slate-800">{{ prestamosPendientes }}</p>
+            </div> -->
+
+            <StatCard v-for="card in cardsPrestamos" 
+                :key="card.id" 
+                :label="card.label" 
+                :value="card.value" 
+                :icon="card.icon" 
+                :color-texto="card.colorTexto" 
+                :color-bg="card.colorBg"
+            >
+                <template #footer>
+                    {{ card.footer }}
+                </template>
+            </StatCard>
         </div>
 
         <BaseDataTable titulo="Todos los Préstamos" placeholderBuscar="Buscar por usuario o concepto..." :headers="columnas" :items="prestamos" :searchFields="camposBusqueda">
@@ -78,10 +91,58 @@
 </template>
 
 <script setup>
-import { ArrowUpRight, ArrowDownLeft, AlertTriangle } from 'lucide-vue-next';
-import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
+import { computed } from 'vue';
+import { ArrowUpRight, ArrowDownLeft, AlertTriangle, BriefcaseBusiness } from 'lucide-vue-next';
 
-defineProps({ prestamos: Array, totalPrestamos: Number, montoPrestado: Number, montoPedido: Number, prestamosPendientes: Number });
+import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
+import StatCard from './StatCard.vue';
+
+const props = defineProps({ 
+    prestamos:{type:Array, default: () => [] }, 
+    totalPrestamos:{type:Number, default:0 }, 
+    montoPrestado:{type:Number, default:0 }, 
+    montoPedido:{type:Number, default:0 }, 
+    prestamosPendientes:{type:Number, default:0 }  
+});
+
+const cardsPrestamos = computed(() => [
+    { 
+        id: 1,
+        label: "Total Registros",
+        value: props.totalPrestamos, 
+        icon: BriefcaseBusiness,
+        colorTexto: "text-indigo-600",
+        colorBg: "bg-indigo-100",
+        footer: `` 
+    },
+    {
+        id: 2,
+        label: "Monto Prestado",
+        value: `$${props.montoPrestado.toLocaleString("es-MX")}`,
+        icon: ArrowUpRight,
+        colorTexto: "text-teal-600",
+        colorBg: "bg-teal-100",
+        footer: ``
+    },
+    {
+        id: 3,
+        label: "Monto Pedido",
+        value: `$${props.montoPedido.toLocaleString("es-MX")}`,
+        icon: ArrowDownLeft,
+        colorTexto: "text-amber-600",
+        colorBg: "bg-amber-100",
+        footer: ``
+    }, 
+    {
+        id: 4,
+        label: "Pendientes",
+        value: props.prestamosPendientes,
+        icon: AlertTriangle,
+        colorTexto: "text-red-600",
+        colorBg: "bg-red-100",
+        footer: ``
+    }, 
+]);
 
 const columnas = [
     { key: 'usuario', label: 'Usuario' }, { key: 'tipo', label: 'Tipo' }, { key: 'concepto', label: 'Concepto' },

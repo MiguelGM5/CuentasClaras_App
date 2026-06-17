@@ -74,7 +74,7 @@ const cerrarSesion = () => {
             :items= "dynamicMenu"
             :usuario= "datosUsuarioLogueado"
             @logout= "cerrarSesion"
-            @irAPerfil="router.push('/perfil')"
+            @irAPerfil="router.push('/user/perfil')"
         />
 
         <main class="ml-60 flex-1 p-8 min-h-screen relative">

@@ -46,8 +46,9 @@
                             :style="{
                                 height: day.sum > 0 ? `${Math.max((day.sum / maxIngreso) * 100, 10)}%` : '0%',
                                 background: day.sum > 0 ? 'linear-gradient(to top, #10b981, #34d399)' : 'transparent'
-                            }">
-                            <!-- Brillo sutil al hacer hover -->
+                            }"
+                        >
+                        
                             <div
                                 class="absolute inset-0 bg-white/20 w-full h-full opacity-0 group-hover:opacity-100 transition-opacity">
                             </div>
@@ -56,7 +57,8 @@
 
                     <!-- Etiqueta del Día -->
                     <span class="absolute -bottom-6 text-sm font-bold text-center capitalize transition-colors"
-                        :class="day.sum > 0 ? 'text-slate-600' : 'text-slate-400'">
+                        :class="day.sum > 0 ? 'text-slate-600' : 'text-slate-400'"
+                    >
                         {{ day.label }}
                     </span>
                 </div>

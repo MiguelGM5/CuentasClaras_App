@@ -6,7 +6,7 @@ export function usePerfil() {
     const perfil = ref({
         nombre: 'Miguel',
         apellidoPaterno: 'Gomez',
-        apellidoMaterno: 'Ramirez',
+        apellidoMaterno: 'Mendez',
         email: 'miguel@ipn.mx',
         telefono: '55 1234 5678',
         fechaNacimiento: '1998-04-12',

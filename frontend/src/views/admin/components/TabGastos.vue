@@ -6,18 +6,30 @@
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <p class="text-[11px] font-bold text-slate-400 uppercase">Total Gastos</p>
-                <p class="text-2xl font-black text-slate-800 mt-1">{{ gastos.length }}</p>
+            <!-- <div class="bg-white p-4 rounded-xl border border-slate-100">
+                <p class="text-lg font-bold text-slate-400 uppercase">Total Gastos</p>
+                <p class="text-4xl font-black text-slate-800 mt-1">{{ gastos.length }}</p>
             </div>
             <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <p class="text-[11px] font-bold text-amber-500 uppercase">Monto Total</p>
-                <p class="text-2xl font-black text-slate-800 mt-1">${{ totalGastos.toLocaleString("es-MX") }}</p>
+                <p class="text-lg font-bold text-amber-500 uppercase">Monto Total</p>
+                <p class="text-4xl font-black text-slate-800 mt-1">${{ totalGastos.toLocaleString("es-MX") }}</p>
             </div>
             <div class="bg-white p-4 rounded-xl border border-slate-100">
-                <p class="text-[11px] font-bold text-violet-500 uppercase">Promedio</p>
-                <p class="text-2xl font-black text-slate-800 mt-1">${{ promedioGasto.toLocaleString("es-MX") }}</p>
-            </div>
+                <p class="text-lg font-bold text-violet-500 uppercase">Promedio</p>
+                <p class="text-4xl font-black text-slate-800 mt-1">${{ promedioGasto.toLocaleString("es-MX") }}</p>
+            </div> -->
+            <StatCard v-for="card in cardsGastos" 
+                :key="card.id" 
+                :label="card.label" 
+                :value="card.value" 
+                :icon="card.icon" 
+                :color-texto="card.colorTexto" 
+                :color-bg="card.colorBg"
+            >
+                <template #footer>
+                    {{ card.footer }}
+                </template>
+            </StatCard>
         </div>
 
         <BaseDataTable titulo="Todos los Gastos" placeholderBuscar="Buscar por usuario o categoría..."
@@ -56,9 +68,46 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { PiggyBank, XLineTop, Receipt } from 'lucide-vue-next';
 import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
+import StatCard from './StatCard.vue';
 
-defineProps({ gastos: Array, totalGastos: Number, promedioGasto: Number });
+const props = defineProps({ 
+    gastos: {type:Array, default: () => []}, 
+    totalGastos: {type:Number, default:0}, 
+    promedioGasto: {type:Number, default:0} 
+});
+
+const cardsGastos = computed(() => [
+    { 
+        id: 1,
+        label: "Total gastos",
+        value: props.gastos.length, 
+        icon: Receipt,
+        colorTexto: "text-indigo-600",
+        colorBg: "bg-indigo-100",
+        footer: `` 
+    },
+    {
+        id: 2,
+        label: "Monto Total",
+        value: `$${props.totalGastos.toLocaleString("es-MX")}`,
+        icon: PiggyBank,
+        colorTexto: "text-teal-600",
+        colorBg: "bg-teal-100",
+        footer: ``
+    },
+    {
+        id: 3,
+        label: "Promedio",
+        value: `$${props.promedioGasto.toLocaleString("es-MX")}`,
+        icon: XLineTop,
+        colorTexto: "text-amber-600",
+        colorBg: "bg-amber-100",
+        footer: ``
+    }
+])
 
 const columnas = [
     { key: 'usuario', label: 'Usuario' }, 

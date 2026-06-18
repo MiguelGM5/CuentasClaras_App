@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue';
 import Swal from 'sweetalert2';
 import { API_URL } from '../constants/api';
+import router from '../router';
 
 export function useRegister(){
     //Datos del formulario
@@ -39,8 +40,8 @@ export function useRegister(){
         const passOk = validPass.value.every(r => r.cumple);
         const confirmedPassOk = validConfirmedPass.value.every(r => r.cumple);
         const emailOk = validEmail.value.every(r => r.cumple);
-
-        return passOk && confirmedPassOk && emailOk;
+        const nombresOk = nombre.value.trim() !== '' && apellidoPaterno.value.trim() !== '';
+        return passOk && confirmedPassOk && emailOk && nombresOk;
     });
 
     const manejadorRegistro = async () => {
@@ -66,18 +67,21 @@ export function useRegister(){
             const datos = await respuesta.json();
             if(!respuesta.ok){
                 //const errorData = await respuesta.json();
-                Swal.fire({
+                return Swal.fire({
                     title: datos.title,
                     text: datos.text,
-                    icon: datos.icon
+                    icon: datos.icon,
                 });
             }
 
-            Swal.fire({
+            const resp = await Swal.fire({
                 title: datos.title,
                 text: datos.text,
-                icon: datos.icon
+                icon: datos.icon,
+                confirmButtonText: datos.confirmButtonText,
+                allowOutsideClick: datos.allowOutsideClick
             });
+            if(resp.isConfirmed) router.push('/');
 
         } catch (error) {
             console.error("error:", error);

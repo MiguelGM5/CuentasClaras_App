@@ -1,8 +1,17 @@
 <script setup>
+	import { ref, computed } from 'vue';
 	import { Mail, Lock, Facebook, Apple, Chrome } from 'lucide-vue-next';
-	import { useRouter, RouterLink } from 'vue-router';
+	import { RouterLink } from 'vue-router';
+	import { useLogin } from '../../composables/useLogin';
 
-	const router = useRouter()
+	const {
+		email,
+        password,
+        loading,
+        manejadorLogin
+	} = useLogin();
+
+	//const router = useRouter()
 </script>
 
 <template>
@@ -32,12 +41,13 @@
 					</RouterLink>
 				</p>
 
-				<form class="space-y-6" @submit.prevent>
-					<div class="border-b-2 border-[#00B4B4] py-2">
+				<form class="space-y-6" @submit.prevent="manejadorLogin">
+					<div class="border-b-2 border-gray-100 py-2 focus-within:border-[#00B4B4] transition-colors">
 						<label class="block text-xs text-gray-400 uppercase font-bold tracking-wider">Correo electrónico</label>
 						<div class="flex items-center gap-3">
 							<Mail :size="18" class="text-gray-400" />
-							<input 
+							<input
+								v-model="email" 
 								type="email" 
 								placeholder="Ingresa tu correo electrónico" 
 								class="w-full outline-none text-gray-700 py-1 bg-transparent" 
@@ -49,7 +59,8 @@
 						<label class="block text-xs text-gray-400 uppercase font-bold tracking-wider">Contraseña</label>
 						<div class="flex items-center gap-3">
 							<Lock :size="18" class="text-gray-400" />
-							<input 
+							<input
+								v-model="password" 
 								type="password" 
 								placeholder="Ingresa tu contraseña" 
 								class="w-full outline-none text-gray-700 py-1 bg-transparent" 
@@ -57,12 +68,12 @@
 						</div>
 					</div>
 
-					<button class="w-full bg-[#00B4B4] text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-100 hover:bg-[#009291] transition-all transform hover:-translate-y-1">
-						Iniciar sesión
+					<button :disabled="loading" class="w-full bg-[#00B4B4] text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-100 hover:bg-[#009291] transition-all transform hover:-translate-y-1">
+						{{ loading ? 'Iniciando Sesion...' : 'Iniciar Sesion' }}
 					</button>
 				</form>
 
-				<div class="mt-12 text-center">
+				<!-- <div class="mt-12 text-center">
 					<p class="text-gray-400 text-xs mb-6 uppercase tracking-[0.2em] font-semibold">Continúa con</p>
 					<div class="flex justify-center gap-6">
 						<button class="p-3 rounded-full border border-gray-100 hover:bg-gray-50 transition-colors">
@@ -75,7 +86,7 @@
 							<Chrome :size="24" class="text-red-500" />
 						</button>
 					</div>
-				</div>
+				</div> -->
 			</div>
 		</div>
 	</div>

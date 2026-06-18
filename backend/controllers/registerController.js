@@ -54,7 +54,9 @@ const registerController = {
 			return res.status(201).json({
 				title: 'Usuario Creado',
 				text: 'Usuario Creado correctamente',
-				icon: 'success'
+				icon: 'success',
+				confirmButtonText: 'Ir al Login',
+				allowOutsideClick: false
 			});
 
 		} catch (error) {

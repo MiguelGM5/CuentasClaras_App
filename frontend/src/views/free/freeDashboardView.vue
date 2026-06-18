@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { PieChart, ArrowRightLeft, CreditCard, Target, X, Crown, FileSignature, Zap } from "lucide-vue-next";
+import Swal from "sweetalert2";
 
 import { useFinance } from "../../composables/useFinance";
 
@@ -15,6 +16,32 @@ import TabPremiumPagares from "./components/TabPremiumPagares.vue";
 //import TabPremiumTools from "../premium/components/TabPremiumTools.vue/index.js";
 
 const router = useRouter();
+
+onMounted(() => {
+    if(sessionStorage.getItem('recentLogin')){
+        const userData = JSON.parse(localStorage.getItem('usuario'));
+        const nombre = userData ? userData.nombre : 'usuario';
+
+        const toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true,
+            didOpen: toast => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
+
+        toast.fire({
+            icon: datos.icon,
+            title: `Bienvenido, ${datos.usuario.nombre}`
+        });
+
+        sessionStorage.removeItem('recentLogin');
+    }
+});
 
 // Extraemos TODA la data financiera
 const { 

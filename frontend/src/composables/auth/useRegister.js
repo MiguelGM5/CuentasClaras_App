@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue';
 import Swal from 'sweetalert2';
-import { API_URL } from '../constants/api';
-import router from '../router';
+import { API_URL } from '../../constants/api';
+import router from '../../router';
 
 export function useRegister(){
     //Datos del formulario

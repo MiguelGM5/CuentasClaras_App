@@ -5,7 +5,6 @@ import { PieChart, ArrowRightLeft, CreditCard, Target, X, Crown, FileSignature, 
 import Swal from "sweetalert2";
 
 import { useFinance } from "../../composables/useFinance";
-
 import Sidebar from "../../components/layout/Sidebar.vue";
 
 import TabFreeOverview from "./components/TabFreeOverview.vue";
@@ -13,15 +12,24 @@ import TabFreeMovimientos from "./components/TabFreeMovimientos.vue";
 import TabFreePrestamos from "./components/TabFreePrestamos.vue";
 import TabFreeMetas from "./components/TabFreeMetas.vue";
 import TabPremiumPagares from "./components/TabPremiumPagares.vue"; 
-//import TabPremiumTools from "../premium/components/TabPremiumTools.vue/index.js";
 
 const router = useRouter();
 
+const usuarioSesion = JSON.parse(localStorage.getItem('user'));
+
+const rolUsuario = usuarioSesion.rol;
+
+const esPremium = computed(() => {
+    return rolUsuario === 'premium';
+});
+
+const datosSidebar = {
+    nombre: `${usuarioSesion.nombre} ${usuarioSesion.apellido_paterno}`,
+    inicial: usuarioSesion.nombre.charAt(0).toUpperCase()
+}
+
 onMounted(() => {
     if(sessionStorage.getItem('recentLogin')){
-        const userData = JSON.parse(localStorage.getItem('usuario'));
-        const nombre = userData ? userData.nombre : 'usuario';
-
         const toast = Swal.mixin({
             toast: true,
             position: 'top-end',
@@ -35,10 +43,9 @@ onMounted(() => {
         });
 
         toast.fire({
-            icon: datos.icon,
-            title: `Bienvenido, ${datos.usuario.nombre}`
+            icon: 'success',
+            title: `Bienvenido, ${datosSidebar.nombre}`
         });
-
         sessionStorage.removeItem('recentLogin');
     }
 });
@@ -58,7 +65,6 @@ const tabsConfig = {
     prestamos: TabFreePrestamos,
     metas: TabFreeMetas,
     pagares: TabPremiumPagares,
-    //herramientas: TabPremiumTools
 };
 
 const menuFree = [
@@ -67,12 +73,7 @@ const menuFree = [
     { key: 'prestamos',  label: 'Préstamos',      icon: CreditCard },
     { key: 'metas',      label: 'Metas Ahorro',   icon: Target },
     { key: 'pagares',    label: 'Pagarés Legales',icon: FileSignature, premium: true }, 
-    //{ key: 'herramientas',label: 'Herramientas',  icon: Zap, premium: true }
 ];
-
-const datosUsuarioLogueado = { nombre: 'Miguel Gómez', email: 'miguel@gmail.com', inicial: 'M', plan: 'premium' };
-
-const esPremium = computed(() => datosUsuarioLogueado.plan === 'premium');
 
 const dynamicMenu = computed(()=>{
     return menuFree.filter(item => {
@@ -84,11 +85,6 @@ const dynamicMenu = computed(()=>{
 const modalMovimiento = ref(false);
 const modalPrestamo = ref(false);
 const modalMeta = ref(false);
-
-const cerrarSesion = () => {
-    localStorage.removeItem("usuario");
-    router.push("/");
-};
 </script>
 
 <template>
@@ -96,10 +92,10 @@ const cerrarSesion = () => {
         
         <Sidebar 
             v-model= "tabActivo"
-            :subtitulo= "esPremium ? 'PREMIUM' : 'BASIC'" 
+            :subtitulo= "rolUsuario" 
             :isPremium= "esPremium" 
             :items= "dynamicMenu"
-            :usuario= "datosUsuarioLogueado"
+            :usuario= "datosSidebar"
             @logout= "cerrarSesion"
             @irAPerfil="router.push('/user/perfil')"
         />

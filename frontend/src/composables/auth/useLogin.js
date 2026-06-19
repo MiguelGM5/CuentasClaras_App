@@ -1,7 +1,8 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2";
-import { API_URL } from "../constants/api";
+import { API_URL } from "../../constants/api";
+import { useAuth } from "./useAuth";
 
 export function useLogin() {
     const router = useRouter();
@@ -50,14 +51,18 @@ export function useLogin() {
                 icon: datos.icon
             }); 
 
-            localStorage.setItem('token', datos.token);
-            localStorage.setItem('usuario', JSON.stringify(datos.usuario));
+            const { loginSession } = useAuth();
 
+            loginSession(datos.token, datos.user);
             sessionStorage.setItem('recentLogin', 'true');
-
             Swal.close();
 
-            router.push('/user/dashboard');
+            const rol = datos.user.rol ? String(datos.user.rol) : 'basic';
+            if (rol === 'superAdmin') {
+                router.push('/admin/dashboard');
+            } else {
+                router.push('/user/dashboard');
+            }
 
         } catch (error) {
             console.error("Error en login:", error);

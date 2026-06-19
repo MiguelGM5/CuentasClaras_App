@@ -1,14 +1,17 @@
 <script setup>
 	import { LogOut } from 'lucide-vue-next';
+	import { useLogout } from '../../composables/auth/useLogout';
+
+	const {manejadorLogout} = useLogout();
 
 	defineProps({
 		modelValue: { type: String, required: true },
-		subtitulo:  { type: String, default: 'Finanzas' },
+		subtitulo:  { type: String},
 		items:      { type: Array, required: true },
 		usuario:    { type: Object, required: true }
 	});
 
-	defineEmits(['update:modelValue', 'logout', 'irAPerfil']);
+	defineEmits(['update:modelValue', 'irAPerfil']);
 </script>
 
 <template>
@@ -19,8 +22,8 @@
           			<div class="w-4 h-4 bg-white rounded-sm"></div>
         		</div>
         		<div>
-          			<p class="font-black text-[#001D3D] leading-tight">Cuentas Claras</p>
-          			<p class="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+          			<p class="font-black text-[#001D3D] leading-tight text-xl">Cuentas Claras</p>
+          			<p class="text-xs font-bold uppercase tracking-widest text-slate-400">
             			{{ subtitulo }}
           			</p>
         		</div>
@@ -33,7 +36,7 @@
         		:key="item.key"
         		@click="$emit('update:modelValue', item.key)"
         		:class="[
-          			'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200',
+          			'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-lg font-semibold transition-all duration-200',
           			modelValue === item.key
             		? 'bg-[#00B4B4] text-white shadow-md shadow-teal-100'
             		: 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
@@ -49,20 +52,20 @@
         		@click="$emit('irAPerfil')"
         		class="w-full flex items-center gap-3 px-2 py-2 mb-1 rounded-xl hover:bg-slate-50 transition-colors group"
       		>
-        		<div class="w-8 h-8 rounded-xl bg-[#001D3D] flex items-center justify-center text-white text-xs font-black flex-shrink-0 group-hover:bg-[#00B4B4] transition-colors">
+        		<div class="w-8 h-8 rounded-xl bg-[#001D3D] flex items-center justify-center text-white text-md font-black flex-shrink-0 group-hover:bg-[#00B4B4] transition-colors">
           			{{ usuario.inicial }}
         		</div>
         		<div class="min-w-0 text-left">
-          			<p class="text-xs font-bold text-slate-700 truncate group-hover:text-[#00B4B4] transition-colors">{{ usuario.nombre }}</p>
-          			<p class="text-[10px] text-slate-400 truncate">Ver perfil</p>
+          			<p class="text-md font-bold text-slate-700 truncate group-hover:text-[#00B4B4] transition-colors">{{ usuario.nombre }}</p>
+          			<p class="text-sm text-slate-400 truncate">Ver perfil</p>
         		</div>
       		</button>
       		<button
-        		@click="$emit('logout')"
-        		class="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+        		@click="manejadorLogout"
+        		class="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl font-semibold text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
       		>
-        		<LogOut :size="15" />
-        		Cerrar sesion
+        		<LogOut :size="20" />
+        		<p class="text-[17px]">Cerrar Sesion</p> 
       		</button>
     	</div>
   	</aside>

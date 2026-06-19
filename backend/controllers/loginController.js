@@ -31,17 +31,17 @@ const loginController = {
             const datosUsuario = {
                 id: usuario.id,
                 nombre: usuario.nombre,
-                apellidoPaterno: usuario.apellidoPaterno,
-                apellidoMaterno: usuario.apellidoMaterno,
+                apellido_paterno: usuario.apellido_paterno,
+                apellido_materno: usuario.apellido_materno,
                 email: usuario.email,
-                rol: usuario.rol_Id,
+                rol: usuario.nombre_rol,
                 createdAt: usuario.createdAt
             }
 
             res.status(200).json({
-                icon: 'succes',
                 token,
-                datosUsuario
+                user: datosUsuario
+                
             });
 
         }catch(error){

@@ -2,7 +2,7 @@
 	import { ref, computed } from 'vue';
 	import { Mail, Lock, Facebook, Apple, Chrome } from 'lucide-vue-next';
 	import { RouterLink } from 'vue-router';
-	import { useLogin } from '../../composables/useLogin';
+	import { useLogin } from '../../composables/auth/useLogin';
 
 	const {
 		email,

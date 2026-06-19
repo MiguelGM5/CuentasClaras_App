@@ -2,7 +2,7 @@
     import { ref, computed } from 'vue';
     import { User, Mail, Lock } from 'lucide-vue-next';
     import { RouterLink } from 'vue-router';
-    import { useRegister } from '../../composables/useRegister.js';
+    import { useRegister } from '../../composables/auth/useRegister.js';
     import ValidadorCampos from '../../components/registro/ValidadorCampos.vue';
 
     const {

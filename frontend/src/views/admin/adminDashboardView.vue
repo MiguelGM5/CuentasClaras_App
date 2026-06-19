@@ -42,6 +42,12 @@ const tabsConfig = {
     prestamos: TabPrestamos,
     gastos: TabGastos
 };
+const usuarioSesion = JSON.parse(localStorage.getItem('user'));
+const rolUsuario = usuarioSesion.rol;
+const datosSidebar = {
+    nombre: `${usuarioSesion.nombre} ${usuarioSesion.apellido_paterno}`,
+    inicial: usuarioSesion.nombre.charAt(0).toUpperCase()
+}
 
 const menuAdmin = [
     { key: 'overview',  label: 'Dashboard',  icon: LayoutDashboard },
@@ -89,9 +95,9 @@ const cerrarSesion = () => {
 
 		<Sidebar 
 			v-model="tabActivo" 
-			subtitulo="Panel Admin" 
+			subtitulo="rolUsuario" 
 			:items="menuAdmin" 
-			:usuario="datosAdminLogueado" 
+			:usuario="datosSidebar" 
 			@logout="cerrarSesion" 
 			@irAPerfil="router.push('/admin/perfil')"
 		/>

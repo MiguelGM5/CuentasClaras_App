@@ -20,7 +20,7 @@ export function useFinance() {
     });
 
     // ─────────────────────────────────────────
-    // CARGA INICIAL (se llama en onMounted)
+    // CARGA INICIAL
     // ─────────────────────────────────────────
     const cargarDatos = async () => {
         loading.value = true;
@@ -39,7 +39,6 @@ export function useFinance() {
             prestamos.value   = await preRes.json();
             metas.value       = await metRes.json();
 
-            // Solo cargamos pagarés si es usuario premium
             if (esPremium) {
                 const pagRes = await fetch(`${API_URL}/api/finance/pagares`, { headers: getHeaders() });
                 if (pagRes.ok) pagares.value = await pagRes.json();
@@ -53,46 +52,36 @@ export function useFinance() {
     };
 
     // ─────────────────────────────────────────
-    // COMPUTED  (igual que antes, pero +monto)
+    // COMPUTED
     // ─────────────────────────────────────────
     const totalIngresos = computed(() =>
-        movimientos.value
-            .filter(m => m.tipo === 'ingreso')
-            .reduce((a, m) => a + +m.monto, 0)
+        movimientos.value.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + +m.monto, 0)
     );
 
     const totalGastos = computed(() =>
-        movimientos.value
-            .filter(m => m.tipo === 'gasto')
-            .reduce((a, m) => a + +m.monto, 0)
+        movimientos.value.filter(m => m.tipo === 'gasto').reduce((a, m) => a + +m.monto, 0)
     );
 
     const saldoActual = computed(() => totalIngresos.value - totalGastos.value);
 
     const gastosPorCategoria = computed(() => {
         const agrupado = {};
-        movimientos.value
-            .filter(m => m.tipo === 'gasto')
-            .forEach(g => {
-                agrupado[g.categoria] = (agrupado[g.categoria] || 0) + +g.monto;
-            });
+        movimientos.value.filter(m => m.tipo === 'gasto').forEach(g => {
+            agrupado[g.categoria] = (agrupado[g.categoria] || 0) + +g.monto;
+        });
         return agrupado;
     });
 
     const totalPrestado = computed(() =>
-        prestamos.value
-            .filter(p => p.tipo === 'prestado')
-            .reduce((a, p) => a + +p.monto, 0)
+        prestamos.value.filter(p => p.tipo === 'prestado').reduce((a, p) => a + +p.monto, 0)
     );
 
     const totalDeuda = computed(() =>
-        prestamos.value
-            .filter(p => p.tipo === 'pedido' && p.estado === 'Pendiente')
-            .reduce((a, p) => a + +p.monto, 0)
+        prestamos.value.filter(p => p.tipo === 'pedido' && p.estado === 'Pendiente').reduce((a, p) => a + +p.monto, 0)
     );
 
     const totalAhorradoEnMetas = computed(() =>
-        metas.value.reduce((a, m) => a + +m.montoActual, 0)
+        metas.value.reduce((a, m) => a + +(m.montoActual ?? m.monto_actual ?? 0), 0)
     );
 
     // ─────────────────────────────────────────
@@ -100,10 +89,8 @@ export function useFinance() {
     // ─────────────────────────────────────────
     const registrarMovimiento = async (datos) => {
         try {
-            const res  = await fetch(`${API_URL}/api/finance/movimientos`, {
-                method:  'POST',
-                headers: getHeaders(),
-                body:    JSON.stringify(datos)
+            const res = await fetch(`${API_URL}/api/finance/movimientos`, {
+                method: 'POST', headers: getHeaders(), body: JSON.stringify(datos)
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -122,10 +109,8 @@ export function useFinance() {
     // ─────────────────────────────────────────
     const registrarPrestamo = async (datos) => {
         try {
-            const res  = await fetch(`${API_URL}/api/finance/prestamos`, {
-                method:  'POST',
-                headers: getHeaders(),
-                body:    JSON.stringify(datos)
+            const res = await fetch(`${API_URL}/api/finance/prestamos`, {
+                method: 'POST', headers: getHeaders(), body: JSON.stringify(datos)
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -142,8 +127,7 @@ export function useFinance() {
     const saldarPrestamo = async (id) => {
         try {
             const res = await fetch(`${API_URL}/api/finance/prestamos/${id}/saldar`, {
-                method:  'PUT',
-                headers: getHeaders()
+                method: 'PUT', headers: getHeaders()
             });
             if (!res.ok) throw new Error('No se pudo saldar el préstamo');
             const idx = prestamos.value.findIndex(p => p.id === id);
@@ -157,14 +141,12 @@ export function useFinance() {
     };
 
     // ─────────────────────────────────────────
-    // CRUD — METAS
+    // CRUD — METAS (NUEVO BLINDAJE)
     // ─────────────────────────────────────────
     const registrarMeta = async (datos) => {
         try {
-            const res  = await fetch(`${API_URL}/api/finance/metas`, {
-                method:  'POST',
-                headers: getHeaders(),
-                body:    JSON.stringify(datos)
+            const res = await fetch(`${API_URL}/api/finance/metas`, {
+                method: 'POST', headers: getHeaders(), body: JSON.stringify(datos)
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -178,17 +160,43 @@ export function useFinance() {
         }
     };
 
-    const abonarMeta = async (id, abono) => {
+    const actualizarMetaDB = async (id, datos) => {
         try {
-            const res = await fetch(`${API_URL}/api/finance/metas/${id}/abonar`, {
-                method:  'PUT',
+            const res = await fetch(`${API_URL}/api/finance/metas/${id}`, {
+                method: 'PUT',
                 headers: getHeaders(),
-                body:    JSON.stringify({ abono })
+                body: JSON.stringify(datos)
             });
-            if (!res.ok) throw new Error('No se pudo abonar a la meta');
+            if (!res.ok) throw new Error('Error al actualizar la meta en el servidor');
+            
+            // Actualizamos en vivo en la interfaz de Vue
             const idx = metas.value.findIndex(m => m.id === id);
-            if (idx !== -1) metas.value[idx].montoActual = +metas.value[idx].montoActual + +abono;
-            Swal.fire({ title: '¡Abono registrado!', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
+            if (idx !== -1) {
+                // Clonamos la meta anterior y le pisamos encima los datos nuevos
+                metas.value[idx] = { ...metas.value[idx], ...datos };
+                
+                // Mapeo preventivo de Snake Case a Camel Case por si acaso
+                if (datos.monto_actual !== undefined) metas.value[idx].montoActual = datos.monto_actual;
+                if (datos.monto_objetivo !== undefined) metas.value[idx].montoObjetivo = datos.monto_objetivo;
+            }
+            return true;
+        } catch (err) {
+            Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
+            return false;
+        }
+    };
+
+    const eliminarMetaDB = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/api/finance/metas/${id}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            if (!res.ok) throw new Error('Error al eliminar la meta');
+
+            // La borramos de la lista visual
+            metas.value = metas.value.filter(m => m.id !== id);
+            Swal.fire({ title: 'Meta eliminada', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
             return true;
         } catch (err) {
             Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
@@ -201,10 +209,8 @@ export function useFinance() {
     // ─────────────────────────────────────────
     const registrarPagare = async (datos) => {
         try {
-            const res  = await fetch(`${API_URL}/api/finance/pagares`, {
-                method:  'POST',
-                headers: getHeaders(),
-                body:    JSON.stringify(datos)
+            const res = await fetch(`${API_URL}/api/finance/pagares`, {
+                method: 'POST', headers: getHeaders(), body: JSON.stringify(datos)
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -232,7 +238,7 @@ export function useFinance() {
         // CRUD
         registrarMovimiento,
         registrarPrestamo, saldarPrestamo,
-        registrarMeta,     abonarMeta,
+        registrarMeta, actualizarMetaDB, eliminarMetaDB,
         registrarPagare,
 
         // Utilitario

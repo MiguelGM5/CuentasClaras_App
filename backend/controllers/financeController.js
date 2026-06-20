@@ -92,15 +92,29 @@ const financeController = {
         }
     },
 
-    abonarMeta: async (req, res) => {
+    updateMeta: async (req, res) => {
         try {
-            const { abono } = req.body;
-            if (!abono || +abono <= 0) return res.status(400).json({ message: 'El abono debe ser mayor a 0' });
-            await Finance.abonarMeta(req.params.id, req.usuario.id, +abono);
+            // Sacamos los datos que el frontend haya decidido mandar
+            const { titulo, monto_objetivo, monto_actual, fecha_limite } = req.body;
+            
+            await Finance.updateMeta(req.params.id, req.usuario.id, {
+                titulo, monto_objetivo, monto_actual, fecha_limite
+            });
+            
             res.json({ ok: true });
         } catch (err) {
-            console.error('abonarMeta:', err);
-            res.status(500).json({ message: 'Error al abonar a la meta' });
+            console.error('updateMeta:', err);
+            res.status(500).json({ message: 'Error al actualizar la meta' });
+        }
+    },
+
+    deleteMeta: async (req, res) => {
+        try {
+            await Finance.deleteMeta(req.params.id, req.usuario.id);
+            res.json({ ok: true });
+        } catch (err) {
+            console.error('deleteMeta:', err);
+            res.status(500).json({ message: 'Error al eliminar la meta' });
         }
     },
 

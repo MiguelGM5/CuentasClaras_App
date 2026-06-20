@@ -65,13 +65,13 @@ const Finance = {
     getMetas: async (usuarioId) => {
         const [rows] = await db.execute(
             `SELECT id, usuario_id, titulo,
-                    monto_objetivo  AS montoObjetivo,
-                    monto_actual    AS montoActual,
-                    DATE_FORMAT(fecha_limite, '%Y-%m-%d') AS fechaLimite,
-                    createdAt
-             FROM test.metas
-             WHERE usuario_id = ?
-             ORDER BY createdAt DESC`,
+                monto_objetivo  AS montoObjetivo,
+                monto_actual    AS montoActual,
+                DATE_FORMAT(fecha_limite, '%Y-%m-%d') AS fechaLimite,
+                createdAt
+            FROM test.metas
+            WHERE usuario_id = ? AND deletedAt IS NULL
+            ORDER BY createdAt DESC`,
             [usuarioId]
         );
         return rows;
@@ -80,17 +80,38 @@ const Finance = {
     createMeta: async (usuarioId, { titulo, monto_objetivo, monto_actual, fecha_limite }) => {
         const [result] = await db.execute(
             `INSERT INTO test.metas (usuario_id, titulo, monto_objetivo, monto_actual, fecha_limite)
-             VALUES (?, ?, ?, ?, ?)`,
+                VALUES (?, ?, ?, ?, ?)`,
             [usuarioId, titulo, monto_objetivo, monto_actual || 0, fecha_limite || null]
         );
         return result.insertId;
     },
 
-    abonarMeta: async (id, usuarioId, abono) => {
+    updateMeta: async (id, usuarioId, { titulo, monto_objetivo, monto_actual, fecha_limite }) => {
         await db.execute(
-            `UPDATE test.metas SET monto_actual = monto_actual + ?
+            `UPDATE test.metas 
+             SET titulo         = COALESCE(?, titulo),
+                 monto_objetivo = COALESCE(?, monto_objetivo),
+                 monto_actual   = COALESCE(?, monto_actual),
+                 fecha_limite   = COALESCE(?, fecha_limite)
              WHERE id = ? AND usuario_id = ?`,
-            [abono, id, usuarioId]
+            [
+                titulo !== undefined ? titulo : null,
+                monto_objetivo !== undefined ? monto_objetivo : null,
+                monto_actual !== undefined ? monto_actual : null,
+                fecha_limite !== undefined ? fecha_limite : null,
+                id, 
+                usuarioId
+            ]
+        );
+    },
+
+    
+    deleteMeta: async (id, usuarioId) => {
+        await db.execute(
+            `UPDATE test.metas 
+                SET deletedAt = CURRENT_TIMESTAMP
+                WHERE id = ? AND usuario_id = ?`,
+            [id, usuarioId]
         );
     },
 

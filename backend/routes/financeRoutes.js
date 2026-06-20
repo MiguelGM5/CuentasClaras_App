@@ -18,7 +18,8 @@ router.put ('/prestamos/:id/saldar',  finance.saldarPrestamo);
 // Metas
 router.get ('/metas',                 finance.getMetas);
 router.post('/metas',                 finance.createMeta);
-router.put ('/metas/:id/abonar',      finance.abonarMeta);
+router.put ('/metas/:id',             finance.updateMeta);
+router.delete('/metas/:id',           finance.deleteMeta);
 
 // Pagarés (el frontend solo los llama si el usuario es premium)
 router.get ('/pagares',               finance.getPagares);

@@ -14,7 +14,6 @@ const verificarToken = (req, res, next) => {
         req.usuario = payload; // { id, email }
         next();
     } catch {
-        console.error("❌ El patovica rebotó el token porque:", error.message);
         return res.status(401).json({ message: 'Token inválido o expirado. Vuelve a iniciar sesión.' });
     }
 };

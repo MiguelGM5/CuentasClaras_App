@@ -80,7 +80,8 @@ const coloresCategorias = {
     Ventas: { hex: '#14b8a6' },
     Entretenimiento: { hex: '#ec4899' },
     Salud: { hex: '#00bc7d' }, 
-    Educación: { hex: '#432dd7' }
+    Educación: { hex: '#432dd7' },
+    Otro: { hex: '#e8e002' }
 };
 
 // --- MOTOR DE ANIMACIÓN PARA LAS TARJETAS ---

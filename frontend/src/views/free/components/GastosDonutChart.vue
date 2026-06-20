@@ -24,7 +24,7 @@
 
                     <div class="flex items-center gap-2">
                         <div class="w-3.5 h-3.5 rounded-full shadow-sm flex-shrink-0"
-                            :style="{ backgroundColor: colores[cat]?.hex || '#94a3b8' }"></div>
+                            :style="{ backgroundColor: colores[cat]?.hex || '#e8e002' }"></div>
                         <span class="text-lg font-semibold text-slate-700 truncate">{{ cat }}</span>
                     </div>
 

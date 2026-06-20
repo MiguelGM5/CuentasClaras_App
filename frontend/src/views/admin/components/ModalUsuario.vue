@@ -1,6 +1,6 @@
 <script setup>
     import { ref, watch } from 'vue';
-    import { X, Check, ShieldUser, UserStar, User } from 'lucide-vue-next';
+    import { X, Check, ShieldUser, UserStar, User, Pencil } from 'lucide-vue-next';
 
     const props = defineProps({
         modelValue:     { type: Boolean, required: true },

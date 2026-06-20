@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { Users, CreditCard, LayoutDashboard, Receipt, Import } from "lucide-vue-next";
+import { Users, CreditCard, LayoutDashboard, Receipt, Import, Pencil } from "lucide-vue-next";
 
 import { useAdmin } from "../../composables/useAdmin.js";
 
@@ -91,50 +91,54 @@ const cerrarSesion = () => {
 </script>
 
 <template>
-	<div class="min-h-screen bg-slate-50 flex font-sans">
+    <div class="min-h-screen bg-slate-50 flex font-sans">
 
-		<Sidebar 
-			v-model="tabActivo" 
-			subtitulo="rolUsuario" 
-			:items="menuAdmin" 
-			:usuario="datosSidebar" 
-			@logout="cerrarSesion" 
-			@irAPerfil="router.push('/admin/perfil')"
-		/>
+        <Sidebar 
+            v-model="tabActivo" 
+            :subtitulo="rolUsuario" 
+            :items="menuAdmin" 
+            :usuario="datosSidebar" 
+            @logout="cerrarSesion" 
+            @irAPerfil="router.push('/admin/perfil')"
+        />
 
-		<main class="ml-60 flex-1 p-8 min-h-screen">
-			<component 
-				:is="tabsConfig[tabActivo]"
-                :usuarios="usuarios"
-                :prestamos="prestamos"
-                :gastos="gastos"
-                :totalUsuarios="totalUsuarios"
-                :cntFree="cntFree"
-                :cntPremium="cntPremium"
-                :cntActivos="cntActivos"
-                :totalPrestamos="totalPrestamos"
-                :prestamosPendientes="prestamosPendientes"
-                :montoPrestado="montoPrestado"
-                :montoPedido="montoPedido"
-                :totalGastos="totalGastos"
-                :promedioGasto="promedioGasto"
-                @cambiarTab="tabActivo = $event"
-                @abrirCrear="abrirCrear"
-                @abrirVer="abrirVer"
-                @abrirEditar="abrirEditar"
-                @eliminarUsuario="eliminarUsuario"
-                @toggleStatus="toggleStatus"
-            />
-		</main>
+        <main class="ml-60 flex-1 p-8 min-h-screen">
+			<keep-alive>
+				<component 
+					:is="tabsConfig[tabActivo]"
+					:usuarios="usuarios"
+					:prestamos="prestamos"
+					:gastos="gastos"
+					:totalUsuarios="totalUsuarios"
+					:cntFree="cntFree"
+					:cntPremium="cntPremium"
+					:cntActivos="cntActivos"
+					:totalPrestamos="totalPrestamos"
+					:prestamosPendientes="prestamosPendientes"
+					:montoPrestado="montoPrestado"
+					:montoPedido="montoPedido"
+					:totalGastos="totalGastos"
+					:promedioGasto="promedioGasto"
+					@cambiarTab="tabActivo = $event"
+					@abrirCrear="abrirCrear"
+					@abrirVer="abrirVer"
+					@abrirEditar="abrirEditar"
+					@eliminarUsuario="eliminarUsuarioDB" 
+					@toggleStatus="toggleStatusDB" 
+            	/>
+			</keep-alive>
+            
+        </main>
 
-		<ModalUsuario 
-			v-model="modalUsuario" 
-			:mode="modalModo" 
-			:usuario="usuarioEnFoco"
-			:totalPrestamos="prestamos.filter((p) => p.usuarioId === usuarioEnFoco?.id).length"
-			:totalGastos="gastos.filter((g) => g.usuarioId === usuarioEnFoco?.id).length" @guardar="guardarUsuario"
-			@cambiarAModoEditar="modalModo = 'edit'" 
-		/>
+        <ModalUsuario 
+            v-model="modalUsuario" 
+            :mode="modalModo" 
+            :usuario="usuarioEnFoco"
+            :totalPrestamos="prestamos.filter((p) => p.usuarioId === usuarioEnFoco?.id).length"
+            :totalGastos="gastos.filter((g) => g.usuarioId === usuarioEnFoco?.id).length" 
+            @guardar="procesarGuardado"
+            @cambiarAModoEditar="modalModo = 'edit'" 
+        />
 
-	</div>
+    </div>
 </template>

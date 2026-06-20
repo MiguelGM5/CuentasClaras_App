@@ -110,7 +110,7 @@ const categoriaColor = {
     Transporte: "bg-blue-50 text-blue-700", 
     Servicios: "bg-purple-50 text-purple-700", 
     Entretenimiento: "bg-pink-50 text-pink-700", 
-    Salud: "bg-green-50 text-green-700", 
-    Educación: "bg-indigo-50 text-indigo-700" 
+    Salud: "bg-emerald-50 text-emerald-700", 
+    Educación: "bg-violet-50 text-violet-700" 
 };
 </script>

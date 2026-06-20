@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { ArrowRight } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -8,16 +8,66 @@ const props = defineProps({
     premium: { type: Number, required: true },
 });
 
+// Variables reactivas para animar los números y la dona
+const fillProgress = ref(0);
+const displayTotal = ref(0);
+const displayFree = ref(0);
+const displayPremium = ref(0);
+
+const animarDona = () => {
+    if (!props.total) return;
+
+    let frame = 0;
+    const duration = 1500;
+    const frameRate = 1000 / 60; // 60 FPS clavados
+    const totalFrames = Math.round(duration / frameRate);
+    const easeOutQuad = t => t * (2 - t);
+
+    fillProgress.value = 0;
+
+    const counter = setInterval(() => {
+        frame++;
+        const progress = easeOutQuad(frame / totalFrames);
+        
+        // Crecemos todo al mismo ritmo
+        fillProgress.value = progress;
+        displayTotal.value = Math.round(props.total * progress);
+        displayFree.value = Math.round(props.free * progress);
+        displayPremium.value = Math.round(props.premium * progress);
+
+        if (frame === totalFrames) {
+            clearInterval(counter);
+            fillProgress.value = 1; // 100% de la animación
+            displayTotal.value = props.total;
+            displayFree.value = props.free;
+            displayPremium.value = props.premium;
+        }
+    }, frameRate);
+};
+
+onMounted(() => {
+    setTimeout(animarDona, 200);
+});
+
+// Si agregás usuarios, se vuelve a animar
+watch(() => props.total, animarDona);
+
 const calculoPorcentaje = plan => {
     return ((plan / (props.total)) * 100).toFixed(0);
 };
 
 const conicGradient = computed(() => {
     if (!props.total) return "conic-gradient(#e2e8f0 0% 100%)";
-    const pFree = calculoPorcentaje(props.free);
-    return `conic-gradient(#00B4B4 0% ${pFree}%, #001D3D ${pFree}% 100%)`;
-});
+    
+    // Porcentajes reales
+    const pFreeReal = (props.free / props.total) * 100;
+    
+    // Porcentajes en animación (el barrido gris a color)
+    const pTotalAnim = 100 * fillProgress.value; 
+    const pFreeAnim = (pFreeReal / 100) * pTotalAnim; 
 
+    return `conic-gradient(#00B4B4 0% ${pFreeAnim}%, #001D3D ${pFreeAnim}% ${pTotalAnim}%, #e2e8f0 ${pTotalAnim}% 100%)`;
+});
 </script>
 
 <template>
@@ -36,7 +86,7 @@ const conicGradient = computed(() => {
                     <div class="absolute m-auto bg-white rounded-full flex flex-col items-center justify-center shadow-sm"
                         style="width: 130px; height: 130px; top: 35px; left: 35px;"
                     >
-                        <p class="text-4xl font-black text-slate-800">{{ total.toLocaleString("es-MX") }}</p>
+                        <p class="text-4xl font-black text-slate-800">{{ displayTotal.toLocaleString("es-MX") }}</p>
                         <p class="text-lg font-black text-slate-400">Usuarios</p>
                     </div>
                 </div>
@@ -51,9 +101,9 @@ const conicGradient = computed(() => {
                     </div>
 
                     <div class="flex items-center gap-1.5 whitespace-nowrap">
-                        <span class="text-lg font-black text-slate-800">{{ free.toLocaleString("es-MX") }}</span>
+                        <span class="text-lg font-black text-slate-800">{{ displayFree.toLocaleString("es-MX") }}</span>
                         <ArrowRight :size="15" class="text-slate-400"/>
-                        <span class="text-md font-semibold text-slate-400">{{ total ? calculoPorcentaje(free) : 0 }}%</span>
+                        <span class="text-md font-semibold text-slate-400">{{ total ? calculoPorcentaje(displayFree) : 0 }}%</span>
                     </div>
                 </div>
 
@@ -64,9 +114,9 @@ const conicGradient = computed(() => {
                     </div>
 
                     <div class="flex items-center gap-1.5 whitespace-nowrap">
-                        <span class="text-lg font-black text-slate-800">{{ premium.toLocaleString("es-MX") }}</span>
+                        <span class="text-lg font-black text-slate-800">{{ displayPremium.toLocaleString("es-MX") }}</span>
                         <ArrowRight :size="15" class="text-slate-400"/>
-                        <span class="text-md font-semibold text-slate-400">{{ total ? calculoPorcentaje(premium) : 0 }}%</span>
+                        <span class="text-md font-semibold text-slate-400">{{ total ? calculoPorcentaje(displayPremium) : 0 }}%</span>
                     </div>
                 </div>
 

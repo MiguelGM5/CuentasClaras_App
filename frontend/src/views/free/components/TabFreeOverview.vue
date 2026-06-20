@@ -22,53 +22,39 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════ -->
-        <!-- STAT CARDS PRINCIPALES              -->
-        <!-- ═══════════════════════════════════ -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
             <div class="bg-[#001D3D] rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
                 <div class="absolute -right-4 -top-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
                 <p class="text-[14px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                     <DollarSign :size="15" />Saldo Actual
                 </p>
-                <p class="text-3xl font-black">${{ saldoActual.toLocaleString("es-MX") }}</p>
+                <p class="text-3xl font-black">${{ displaySaldo.toLocaleString("es-MX") }}</p>
             </div>
             <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
                 <p class="text-[14px] font-bold text-emerald-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                     <ArrowDownLeft :size="15" /> Ingresos Mes
                 </p>
-                <p class="text-3xl font-black text-slate-800">${{ totalIngresos.toLocaleString("es-MX") }}</p>
+                <p class="text-3xl font-black text-slate-800">${{ displayIngresos.toLocaleString("es-MX") }}</p>
             </div>
             <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
                 <p class="text-[14px] font-bold text-orange-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                     <ArrowUpRight :size="15" /> Gastos Mes
                 </p>
-                <p class="text-3xl font-black text-slate-800">${{ totalGastos.toLocaleString("es-MX") }}</p>
+                <p class="text-3xl font-black text-slate-800">${{ displayGastos.toLocaleString("es-MX") }}</p>
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════ -->
-        <!-- PANEL DE GRÁFICAS (Blindado)        -->
-        <!-- ═══════════════════════════════════ -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-7">
-
-            <!-- 1. PASTEL DE GASTOS (Izquierda) -->
             <GastosDonutChart :total="totalGastos" :datos="gastosPorCategoria" :colores="coloresCategorias" />
-
-            <!-- 2. BARRAS DE METAS (Top 3) (Derecha) -->
             <MetasBarChart :metas="metas" />
-
-            <!-- 3. HISTOGRAMA DE INGRESOS (Abajo, ancho completo) -->
             <IngresosHistogram :movimientos="movimientos" />
-
         </div>
-
     </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { Target, CreditCard, Plus, ArrowDownLeft, ArrowUpRight, TrendingUp, DollarSign, Crown } from 'lucide-vue-next';
+import { ref, onMounted, watch } from 'vue';
+import { Target, CreditCard, Plus, ArrowDownLeft, ArrowUpRight, DollarSign } from 'lucide-vue-next';
 import GastosDonutChart from './GastosDonutChart.vue';
 import MetasBarChart from './MetasBarChart.vue';
 import IngresosHistogram from './IngresosHistogram.vue';
@@ -92,46 +78,54 @@ const coloresCategorias = {
     Servicios: { hex: '#a855f7' },
     Sueldo: { hex: '#10b981' },
     Ventas: { hex: '#14b8a6' },
-    Entretenimiento: { hex: '#ec4899' }
+    Entretenimiento: { hex: '#ec4899' },
+    Salud: { hex: '#00bc7d' }, 
+    Educación: { hex: '#432dd7' }
 };
 
-// Pastel garantizado con backgroundImage
-const graficaPastel = computed(() => {
-    if (props.totalGastos === 0) return "conic-gradient(#e2e8f0 0% 100%)";
-    let gradientStr = "";
-    let acumulado = 0;
-    for (const [cat, monto] of Object.entries(props.gastosPorCategoria || {})) {
-        const porcentaje = (monto / props.totalGastos) * 100;
-        const color = coloresCategorias[cat]?.hex || '#94a3b8';
-        gradientStr += `${color} ${acumulado}% ${acumulado + porcentaje}%, `;
-        acumulado += porcentaje;
-    }
-    return `conic-gradient(${gradientStr.slice(0, -2)})`;
-});
+// --- MOTOR DE ANIMACIÓN PARA LAS TARJETAS ---
+const displaySaldo = ref(0);
+const displayIngresos = ref(0);
+const displayGastos = ref(0);
 
-const topMetas = computed(() => (props.metas || []).slice(0, 3));
-const calcularPorcentaje = (meta) => Math.min((meta.montoActual / meta.montoObjetivo) * 100, 100).toFixed(0);
+const animateNumbers = () => {
+    const duration = 1800;
+    const frameRate = 1000 / 60; // 60 FPS
+    const totalFrames = Math.round(duration / frameRate);
+    const easeOutQuad = t => t * (2 - t);
 
-// Histograma 
-const ingresosPerDay = computed(() => {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date("2026-06-10"); // Ojo acá: fijé la fecha para que te cuadren los Mocks
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split("T")[0];
-        const label = d.toLocaleDateString("es-MX", { weekday: "short", day: "numeric" });
+    let frame = 0;
+    const targets = {
+        saldo: props.saldoActual || 0,
+        ingresos: props.totalIngresos || 0,
+        gastos: props.totalGastos || 0
+    };
 
-        const sum = (props.movimientos || [])
-            .filter(m => m.tipo === 'ingreso' && m.fecha === dateStr)
-            .reduce((a, b) => a + b.monto, 0);
+    displaySaldo.value = 0;
+    displayIngresos.value = 0;
+    displayGastos.value = 0;
 
-        days.push({ label, sum, dateStr });
-    }
-    return days;
-});
+    const counter = setInterval(() => {
+        frame++;
+        const progress = easeOutQuad(frame / totalFrames);
 
-const maxIngreso = computed(() => {
-    const max = Math.max(...ingresosPerDay.value.map(d => d.sum));
-    return max > 0 ? max : 100;
-});
+        displaySaldo.value = Math.round(targets.saldo * progress);
+        displayIngresos.value = Math.round(targets.ingresos * progress);
+        displayGastos.value = Math.round(targets.gastos * progress);
+
+        if (frame === totalFrames) {
+            clearInterval(counter);
+            displaySaldo.value = targets.saldo;
+            displayIngresos.value = targets.ingresos;
+            displayGastos.value = targets.gastos;
+        }
+    }, frameRate);
+};
+
+onMounted(animateNumbers);
+
+watch(
+    () => [props.saldoActual, props.totalIngresos, props.totalGastos],
+    animateNumbers
+);
 </script>

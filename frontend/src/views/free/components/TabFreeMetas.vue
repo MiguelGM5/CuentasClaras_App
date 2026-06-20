@@ -1,52 +1,116 @@
 <template>
-  <div>
-    <div class="flex justify-between items-center mb-8">
-      <div>
-        <h1 class="text-3xl font-black text-slate-800 tracking-tight">Metas de Ahorro</h1>
-        <p class="text-sm text-slate-400 mt-1">Separá plata para tus objetivos</p>
-      </div>
-      <button @click="$emit('abrirModalMeta')" class="flex items-center gap-2 bg-[#00B4B4] hover:bg-[#009291] text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-md">
-        <Plus :size="16" /> Crear Meta
-      </button>
-    </div>
+    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col">
+        <h3 class="text-2xl font-black text-slate-800 text-center">Top Metas de Ahorro</h3>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      <div v-for="meta in metas" :key="meta.id" class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col">
-        <div class="flex justify-between items-start mb-4">
-          <h3 class="font-black text-slate-800 text-lg leading-tight">{{ meta.titulo }}</h3>
-          <button class="text-slate-400 hover:text-slate-600"><MoreVertical :size="18"/></button>
-        </div>
-        
-        <div class="flex justify-between items-end mb-2 mt-auto">
-          <div>
-            <p class="text-[10px] font-bold text-slate-400 uppercase">Ahorrado</p>
-            <p class="text-2xl font-black text-[#00B4B4]">${{ meta.montoActual.toLocaleString("es-MX") }}</p>
-          </div>
-          <div class="text-right">
-            <p class="text-[10px] font-bold text-slate-400 uppercase">Objetivo</p>
-            <p class="text-sm font-bold text-slate-600">${{ meta.montoObjetivo.toLocaleString("es-MX") }}</p>
-          </div>
-        </div>
+        <div class="flex-1 flex flex-col justify-center gap-6 mt-6">
+            <!-- 🔥 Usamos el arreglo displayMetas que tiene los valores animados -->
+            <div v-for="meta in displayMetas" :key="meta.id">
+                
+                <!-- Textos Superiores -->
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-lg font-bold text-slate-700 truncate pr-2">{{ meta.titulo }}</span>
+                    <!-- Porcentaje Animado -->
+                    <span class="text-lg font-black text-[#00B4B4]">{{ meta.displayPorcentaje }}%</span>
+                </div>
 
-        <!-- Progress Bar Mágica -->
-        <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-3">
-          <div class="h-full bg-gradient-to-r from-[#009291] to-[#00D4D4] rounded-full" 
-               :style="{ width: `${Math.min((meta.montoActual / meta.montoObjetivo) * 100, 100)}%` }">
-          </div>
+                <!-- GRÁFICA DE BARRA HORIZONTAL -->
+                <div class="relative w-full rounded-full overflow-hidden"
+                    style="height: 14px; background-color: #f1f5f9;">
+                    <!-- Le quitamos el transition de CSS porque nuestro JS ya lo anima fluido a 60 FPS -->
+                    <div class="absolute top-0 left-0 h-full rounded-full shadow-sm"
+                        style="background: linear-gradient(to right, #009291, #00D4D4);"
+                        :style="{ width: `${meta.displayPorcentaje}%` }"></div>
+                </div>
+
+                <!-- Textos Inferiores -->
+                <div class="flex justify-between mt-2">
+                    <span class="text-sm text-slate-500 font-semibold">
+                        Llevas: <span class="text-slate-700">${{ meta.displayMonto.toLocaleString("es-MX") }}</span>
+                    </span>
+                    <span class="text-sm text-slate-400 font-semibold">
+                        Meta: ${{ meta.montoObjetivo.toLocaleString("es-MX") }}
+                    </span>
+                </div>
+                
+            </div>
+
+            <!-- Estado vacío -->
+            <div v-if="topMetas.length === 0"
+                class="text-center text-slate-400 text-xs py-4 flex flex-col items-center">
+                <Target :size="24" class="text-slate-300 mb-2" />
+                No tienes metas activas. ¡Crea una!
+            </div>
         </div>
-        
-        <div class="flex justify-between items-center text-xs">
-          <span class="font-bold text-[#00B4B4]">{{ ((meta.montoActual / meta.montoObjetivo) * 100).toFixed(0) }}%</span>
-          <span class="text-slate-400 flex items-center gap-1"><Calendar :size="12"/> {{ meta.fechaLimite }}</span>
-        </div>
-      </div>
     </div>
-  </div>
 </template>
 
 <script setup>
-import { Plus, MoreVertical, Calendar } from 'lucide-vue-next';
+import { ref, computed, onMounted, watch } from 'vue';
+import { Target } from 'lucide-vue-next';
 
-defineProps({ metas: Array });
-defineEmits(['abrirModalMeta']);
+const props = defineProps({
+    metas: { type: Array, required: true }
+});
+
+// Agarramos solo las primeras 3
+const topMetas = computed(() => (props.metas || []).slice(0, 3));
+
+// Arreglo reactivo para guardar los datos mientras van subiendo
+const displayMetas = ref([]);
+
+const animarMetas = () => {
+    if (!topMetas.value.length) return;
+
+    // Inicializamos todo en 0 para que arranque desde abajo
+    displayMetas.value = topMetas.value.map(m => ({
+        ...m,
+        displayMonto: 0,
+        displayPorcentaje: 0
+    }));
+
+    let frame = 0;
+    const duration = 1500;
+    const frameRate = 1000 / 60; // 60 FPS
+    const totalFrames = Math.round(duration / frameRate);
+    const easeOutQuad = t => t * (2 - t);
+
+    const counter = setInterval(() => {
+        frame++;
+        const progress = easeOutQuad(frame / totalFrames);
+
+        // Actualizamos cada meta en vivo
+        displayMetas.value = topMetas.value.map(meta => {
+            const targetMonto = meta.montoActual || 0;
+            // Topamos el porcentaje a 100 por si el güey ahorró de más
+            const targetPorcentaje = Math.min((targetMonto / meta.montoObjetivo) * 100, 100) || 0;
+
+            return {
+                ...meta,
+                displayMonto: Math.round(targetMonto * progress),
+                displayPorcentaje: (targetPorcentaje * progress).toFixed(0)
+            };
+        });
+
+        // Cuando termina, clavamos los valores exactos
+        if (frame === totalFrames) {
+            clearInterval(counter);
+            displayMetas.value = topMetas.value.map(meta => {
+                const targetMonto = meta.montoActual || 0;
+                return {
+                    ...meta,
+                    displayMonto: targetMonto,
+                    displayPorcentaje: Math.min((targetMonto / meta.montoObjetivo) * 100, 100).toFixed(0)
+                };
+            });
+        }
+    }, frameRate);
+};
+
+// Arrancamos el motorcito un microsegundo después de montar el componente
+onMounted(() => {
+    setTimeout(animarMetas, 150);
+});
+
+// Si el usuario crea o edita una meta, que se vuelva a animar
+watch(topMetas, animarMetas, { deep: true });
 </script>

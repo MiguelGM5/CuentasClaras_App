@@ -1,112 +1,230 @@
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Swal from 'sweetalert2';
+import { API_URL } from '../constants/api';
+import { useAuth } from './auth/useAuth';
 
-export function useAdmin(){
-    //Data Hardcodeada
-    const usuarios = ref([
-        { id: 1, nombre: "Miguel", apellidoPaterno: "Gómez", email: "miguel@ipn.mx", rol: "superAdmin", plan: "superAdmin", status: 1, fechaRegistro: "2026-01-15" },
-        { id: 2, nombre: "Rocío", apellidoPaterno: "Pérez", email: "rocio@gmail.com", rol: "premium", plan: "premium", status: 1, fechaRegistro: "2026-02-20" },
-        { id: 3, nombre: "Juan", apellidoPaterno: "Pérez", email: "juan@outlook.com", rol: "user", plan: "free", status: 1, fechaRegistro: "2026-03-10" },
-        { id: 4, nombre: "Lucas", apellidoPaterno: "Pereyra", email: "lucas@gmail.com", rol: "user", plan: "free", status: 0, fechaRegistro: "2026-04-05" },
-        { id: 5, nombre: "Ana", apellidoPaterno: "Torres", email: "ana@gmail.com", rol: "premium", plan: "premium", status: 1, fechaRegistro: "2026-05-12" },
-        { id: 6, nombre: "Carlos", apellidoPaterno: "Mendoza", email: "carlos@hotmail.com", rol: "user", plan: "free", status: 1, fechaRegistro: "2026-05-28" },
-        { id: 7, nombre: "Sofía", apellidoPaterno: "Ramírez", email: "sofia.ramirez@gmail.com", rol: "premium", plan: "premium", status: 1, fechaRegistro: "2026-06-01" }
-    ]);
+// Mapeo plan ↔ rol_id (debe coincidir con test.roles)
+const PLAN_A_ROL_ID = { basic: 2, premium: 3, superAdmin: 1 };
+const ROL_A_PLAN    = { basic: 'basic', premium: 'premium', superAdmin: 'superAdmin' };
+const { token } = useAuth();
 
-    const prestamos = ref([
-        { id: 1, usuarioId: 2, usuarioNombre: "Rocío Pérez", tipo: "prestado", monto: 1500, concepto: "Préstamo comida familiar", estado: "Pendiente", fecha: "2026-06-02", fechaPago: "2026-06-15" },
-        { id: 2, usuarioId: 2, usuarioNombre: "Rocío Pérez", tipo: "pedido", monto: 600, concepto: "Gasolina viaje Acapulco", estado: "Saldado", fecha: "2026-06-03", fechaPago: "2026-06-10" },
-        { id: 3, usuarioId: 3, usuarioNombre: "Juan Pérez", tipo: "prestado", monto: 800, concepto: "Herramientas taller", estado: "Pendiente", fecha: "2026-06-04", fechaPago: "2026-06-20" },
-        { id: 4, usuarioId: 5, usuarioNombre: "Ana Torres", tipo: "pedido", monto: 2000, concepto: "Reparación auto", estado: "Pendiente", fecha: "2026-06-05", fechaPago: "2026-07-01" },
-        { id: 5, usuarioId: 5, usuarioNombre: "Ana Torres", tipo: "prestado", monto: 500, concepto: "Comida colega trabajo", estado: "Saldado", fecha: "2026-06-05", fechaPago: "2026-06-08" },
-        { id: 6, usuarioId: 7, usuarioNombre: "Sofía Ramírez", tipo: "prestado", monto: 3000, concepto: "Emergencia médica familiar", estado: "Pendiente", fecha: "2026-06-06", fechaPago: "2026-07-06" },
-        { id: 7, usuarioId: 6, usuarioNombre: "Carlos Mendoza", tipo: "pedido", monto: 450, concepto: "Pasaje camión mensual", estado: "Saldado", fecha: "2026-06-07", fechaPago: "2026-06-07" },
-        { id: 8, usuarioId: 3, usuarioNombre: "Juan Pérez", tipo: "pedido", monto: 1200, concepto: "Renta mes adelantado", estado: "Pendiente", fecha: "2026-06-08", fechaPago: "2026-06-30" }
-    ]);
+export function useAdmin() {
 
-    const gastos = ref([
-        { id: 1, usuarioId: 2, usuarioNombre: "Rocío Pérez", categoria: "Alimentación", monto: 2500, descripcion: "Supermercado semanal", fecha: "2026-06-01" },
-        { id: 2, usuarioId: 2, usuarioNombre: "Rocío Pérez", categoria: "Transporte", monto: 800, descripcion: "Gasolina del mes", fecha: "2026-06-02" },
-        { id: 3, usuarioId: 3, usuarioNombre: "Juan Pérez", categoria: "Servicios", monto: 1200, descripcion: "Internet + luz", fecha: "2026-06-03" },
-        { id: 4, usuarioId: 5, usuarioNombre: "Ana Torres", categoria: "Entretenimiento", monto: 400, descripcion: "Streaming + apps", fecha: "2026-06-04" },
-        { id: 5, usuarioId: 5, usuarioNombre: "Ana Torres", categoria: "Alimentación", monto: 1800, descripcion: "Restaurantes semana", fecha: "2026-06-05" },
-        { id: 6, usuarioId: 7, usuarioNombre: "Sofía Ramírez", categoria: "Salud", monto: 950, descripcion: "Medicamentos mes", fecha: "2026-06-06" },
-        { id: 7, usuarioId: 6, usuarioNombre: "Carlos Mendoza", categoria: "Transporte", monto: 1100, descripcion: "Uber semana", fecha: "2026-06-07" },
-        { id: 8, usuarioId: 3, usuarioNombre: "Juan Pérez", categoria: "Educación", monto: 2200, descripcion: "Curso de certificación", fecha: "2026-06-08" }
-    ]);
-    /********************************************************/
+    // ─────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────
+    const usuarios  = ref([]);
+    const prestamos = ref([]);
+    const gastos    = ref([]);
+    const loading   = ref(false);
+    const error     = ref(null);
 
+    const getHeaders = () => {
+        const tokenReal = localStorage.getItem('token');
+        //console.log("Token que viaja al backend:", tokenReal);
+        return{
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    };
+
+    // ─────────────────────────────────────────
+    // CARGA INICIAL
+    // ─────────────────────────────────────────
+    const cargarDatos = async () => {
+        
+
+        loading.value = true;
+        error.value   = null;
+        try {
+            const [usrRes, preRes, gasRes] = await Promise.all([
+                fetch(`${API_URL}/api/admin/usuarios`,  { headers: getHeaders() }),
+                fetch(`${API_URL}/api/admin/prestamos`, { headers: getHeaders() }),
+                fetch(`${API_URL}/api/admin/gastos`,    { headers: getHeaders() }),
+            ]);
+
+            if (!usrRes.ok || !preRes.ok || !gasRes.ok)
+                throw new Error('Error al cargar datos del panel admin');
+
+            const rawUsuarios = await usrRes.json();
+
+            // Agrega campo `plan` derivado del rol para compatibilidad con ModalUsuario
+            usuarios.value = rawUsuarios.map(u => ({
+                ...u,
+                plan: ROL_A_PLAN[u.rol] ?? 'basic'
+            }));
+
+            prestamos.value = await preRes.json();
+            gastos.value    = await gasRes.json();
+
+        } catch (err) {
+            error.value = err.message;
+            console.error('useAdmin.cargarDatos:', err);
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    // ─────────────────────────────────────────
     // STATS COMPUTADAS
-    const clientesReales = computed(() => usuarios.value.filter((u) => u.plan !== "superAdmin"));
-    const totalUsuarios = computed(() => clientesReales.value.length);
-    const cntFree = computed(() => clientesReales.value.filter((u) => u.plan === "free").length);
-    const cntPremium = computed(() => clientesReales.value.filter((u) => u.plan === "premium").length);
-    const cntActivos = computed(() => clientesReales.value.filter((u) => u.status === 1).length);
+    // ─────────────────────────────────────────
+    const clientesReales     = computed(() => usuarios.value.filter(u => u.rol !== 'superAdmin'));
+    const totalUsuarios      = computed(() => clientesReales.value.length);
+    const cntFree            = computed(() => clientesReales.value.filter(u => u.plan === 'basic').length);
+    const cntPremium         = computed(() => clientesReales.value.filter(u => u.plan === 'premium').length);
+    const cntActivos         = computed(() => clientesReales.value.filter(u => u.status === 1).length);
 
-    const totalPrestamos = computed(() => prestamos.value.length);
-    const montoPrestado = computed(() => prestamos.value.filter((p) => p.tipo === "prestado").reduce((a, p) => a + p.monto, 0));
-    const montoPedido = computed(() => prestamos.value.filter((p) => p.tipo === "pedido").reduce((a, p) => a + p.monto, 0));
-    const prestamosPendientes = computed(() => prestamos.value.filter((p) => p.estado === "Pendiente").length);
+    const totalPrestamos     = computed(() => prestamos.value.length);
+    const montoPrestado      = computed(() => prestamos.value.filter(p => p.tipo === 'prestado').reduce((a, p) => a + +p.monto, 0));
+    const montoPedido        = computed(() => prestamos.value.filter(p => p.tipo === 'pedido').reduce((a, p)  => a + +p.monto, 0));
+    const prestamosPendientes= computed(() => prestamos.value.filter(p => p.estado === 'Pendiente').length);
 
-    const totalGastos = computed(() => gastos.value.reduce((a, g) => a + g.monto, 0));
-    const promedioGasto = computed(() => gastos.value.length ? Math.round(totalGastos.value / gastos.value.length) : 0);  
+    const totalGastos        = computed(() => gastos.value.reduce((a, g) => a + +g.monto, 0));
+    const promedioGasto      = computed(() => gastos.value.length ? Math.round(totalGastos.value / gastos.value.length) : 0);
 
-    const guardarUsuarioDB = (datos, modo) => {
+    // ─────────────────────────────────────────
+    // CRUD USUARIOS
+    // ─────────────────────────────────────────
+
+    /** Crea o edita un usuario. `modo` = 'create' | 'edit' */
+    const guardarUsuarioDB = async (datos, modo) => {
         if (!datos.nombre || !datos.email) {
-            Swal.fire({ title: "Campos requeridos", text: "Nombre y correo son obligatorios.", icon: "warning", confirmButtonColor: "#00B4B4" });
+            Swal.fire({ title: 'Campos requeridos', text: 'Nombre y correo son obligatorios.', icon: 'warning', confirmButtonColor: '#00B4B4' });
             return false;
         }
-        
-        if (modo === "edit") {
-            const idx = usuarios.value.findIndex((u) => u.id === datos.id);
-            if (idx !== -1) usuarios.value[idx] = { ...datos };
-            Swal.fire({ title: "Usuario actualizado", icon: "success", confirmButtonColor: "#00B4B4", timer: 1500, showConfirmButton: false });
-        } else {
-            const newId = Math.max(...usuarios.value.map((u) => u.id), 0) + 1;
-            usuarios.value.push({ ...datos, id: newId, fechaRegistro: new Date().toISOString().split('T')[0] });
-            Swal.fire({ title: "¡Usuario creado!", icon: "success", confirmButtonColor: "#00B4B4", timer: 1500, showConfirmButton: false });
+
+        const payload = {
+            nombre:          datos.nombre,
+            apellidoPaterno: datos.apellidoPaterno || '',
+            apellidoMaterno: datos.apellidoMaterno || '',
+            email:           datos.email,
+            rol_id:          PLAN_A_ROL_ID[datos.plan] ?? 3,
+            status:          datos.status ?? 1,
+        };
+
+        try {
+            if (modo === 'edit') {
+                const res = await fetch(`${API_URL}/api/admin/usuarios/${datos.id}`, {
+                    method:  'PUT',
+                    headers: getHeaders(),
+                    body:    JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    const d = await res.json();
+                    throw new Error(d.message);
+                }
+                // Actualizar estado local sin recargar todo
+                const idx = usuarios.value.findIndex(u => u.id === datos.id);
+                if (idx !== -1) usuarios.value[idx] = { ...usuarios.value[idx], ...datos };
+                Swal.fire({ title: 'Usuario actualizado', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
+
+            } else {
+                // Para crear necesitamos password. Si no viene, pedirlo con Swal
+                let password = datos.password;
+                if (!password) {
+                    const { value } = await Swal.fire({
+                        title:             'Contraseña inicial',
+                        text:              'Define la contraseña temporal para el nuevo usuario.',
+                        input:             'password',
+                        inputPlaceholder:  'Contraseña (min. 8 caracteres)',
+                        confirmButtonColor:'#00B4B4',
+                        showCancelButton:  true,
+                        cancelButtonText:  'Cancelar',
+                        inputValidator: v => (!v || v.length < 8) ? 'Mínimo 8 caracteres.' : null
+                    });
+                    if (!value) return false;
+                    password = value;
+                }
+
+                const res  = await fetch(`${API_URL}/api/admin/usuarios`, {
+                    method:  'POST',
+                    headers: getHeaders(),
+                    body:    JSON.stringify({ ...payload, password })
+                });
+                const created = await res.json();
+                if (!res.ok) throw new Error(created.message);
+
+                usuarios.value.unshift({
+                    ...datos,
+                    id:            created.id,
+                    fechaRegistro: new Date().toISOString().split('T')[0],
+                    plan:          datos.plan ?? 'basic'
+                });
+                Swal.fire({ title: '¡Usuario creado!', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
+            }
+            return true;
+
+        } catch (err) {
+            Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
+            return false;
         }
-        return true;
     };
 
     const eliminarUsuarioDB = async (user) => {
         const result = await Swal.fire({
-            title: "¿Eliminar usuario?",
-            html: `Se eliminará a <strong>${user.nombre} ${user.apellidoPaterno}</strong> permanentemente.`,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#ef4444",
-            cancelButtonColor: "#94a3b8",
-            confirmButtonText: "Sí, eliminar",
-            cancelButtonText: "Cancelar",
+            title:              '¿Eliminar usuario?',
+            html:               `Se eliminará a <strong>${user.nombre} ${user.apellidoPaterno}</strong> permanentemente.`,
+            icon:               'warning',
+            showCancelButton:   true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor:  '#94a3b8',
+            confirmButtonText:  'Sí, eliminar',
+            cancelButtonText:   'Cancelar',
         });
-        
-        if (result.isConfirmed) {
-            usuarios.value = usuarios.value.filter((u) => u.id !== user.id);
-            Swal.fire({ title: "Eliminado", icon: "success", confirmButtonColor: "#00B4B4", timer: 1200, showConfirmButton: false });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch(`${API_URL}/api/admin/usuarios/${user.id}`, {
+                method:  'DELETE',
+                headers: getHeaders()
+            });
+            if (!res.ok) throw new Error('No se pudo eliminar');
+            usuarios.value = usuarios.value.filter(u => u.id !== user.id);
+            Swal.fire({ title: 'Eliminado', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1200, showConfirmButton: false });
+        } catch (err) {
+            Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
         }
     };
 
-    const toggleStatusDB = (user) => {
-        user.status = user.status === 1 ? 0 : 1;
+    /** Toggle local inmediato + sincroniza con la BD */
+    const toggleStatusDB = async (user) => {
+        const nuevoStatus = user.status === 1 ? 0 : 1;
+        user.status = nuevoStatus;
+        try {
+            await fetch(`${API_URL}/api/admin/usuarios/${user.id}`, {
+                method:  'PUT',
+                headers: getHeaders(),
+                body:    JSON.stringify({
+                    nombre:          user.nombre,
+                    apellidoPaterno: user.apellidoPaterno,
+                    apellidoMaterno: user.apellidoMaterno,
+                    email:           user.email,
+                    rol_id:          PLAN_A_ROL_ID[user.plan] ?? 3,
+                    status:          nuevoStatus
+                })
+            });
+        } catch (err) {
+            // Revertir si falla
+            user.status = nuevoStatus === 1 ? 0 : 1;
+            console.error('toggleStatus:', err);
+        }
     };
 
+    onMounted(cargarDatos);
+
     return {
-        usuarios, 
-        prestamos, 
-        gastos,
-        totalUsuarios, 
-        cntFree, 
-        cntPremium, 
-        cntActivos,
-        totalPrestamos, 
-        montoPrestado, 
-        montoPedido, 
-        prestamosPendientes,
-        totalGastos, 
-        promedioGasto,
-        guardarUsuarioDB, 
-        eliminarUsuarioDB, 
-        toggleStatusDB
+        // Estado
+        usuarios, prestamos, gastos,
+        loading, error,
+
+        // Stats
+        totalUsuarios, cntFree, cntPremium, cntActivos,
+        totalPrestamos, montoPrestado, montoPedido, prestamosPendientes,
+        totalGastos, promedioGasto,
+
+        // Acciones
+        guardarUsuarioDB, eliminarUsuarioDB, toggleStatusDB,
+        cargarDatos
     };
 }

@@ -8,7 +8,6 @@ const AdminDashboardView = ()=> import('../views/admin/adminDashboardView.vue');
 const FreeDashboardView = ()=> import('../views/free/freeDashboardView.vue');
 const PerfilView = () => import('../views/perfil/perfilView.vue');
 
-
 const routes = [
 	{
 		path: '/',
@@ -59,7 +58,7 @@ const router = createRouter({
 router.beforeEach((to) => {
     const { isLoggedIn, userRole } = useAuth();
 
-    if (to.meta.requiresAuth && !token) {
+    if (to.meta.requiresAuth && !isLoggedIn.value) {
         return { name: 'Login' };
     }
     
@@ -67,7 +66,7 @@ router.beforeEach((to) => {
         return userRole.value === 'superAdmin' ? { name: 'Admin' } : { name: 'Free' };
     }
 
-	if(to.path.startsWith('/admin') && userRole.value  !== 'superAdmin'){
+	if(to.path.startsWith('/admin') && userRole.value !== 'superAdmin'){
 		return { name: 'Free' };
 	}
 

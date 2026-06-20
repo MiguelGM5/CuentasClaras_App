@@ -69,8 +69,8 @@
 </template>
 
 <script setup>
-import { Users, UserStar, CreditCard, Wallet } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { markRaw, computed } from 'vue';
+import { Users, UserStar, CreditCard, Wallet  } from 'lucide-vue-next';
 import StatCard from './StatCard.vue';
 import UserDonutChart from './UserDonutChart.vue';
 import LoansBarChart from './LoansBarChart.vue';
@@ -94,7 +94,7 @@ const stats = computed( () => [
         id: 1,
         label: "Total Usuarios",
         value: props.totalUsuarios, 
-        icon: Users,
+        icon: markRaw(Users), 
         colorTexto: "text-indigo-600",
         colorBg: "bg-indigo-100",
         footer: `${props.cntActivos} activos`
@@ -103,7 +103,7 @@ const stats = computed( () => [
         id: 2,
         label: "Usuarios Premium",
         value: props.cntPremium,
-        icon: UserStar,
+        icon: markRaw(UserStar), 
         colorTexto: "text-yellow-600",
         colorBg: "bg-yellow-100",
         footer: `${props.totalUsuarios ? ((props.cntPremium / props.totalUsuarios) * 100).toFixed(0) : 0}% del total`
@@ -112,7 +112,7 @@ const stats = computed( () => [
         id: 3,
         label: "Préstamos Activos",
         value: props.prestamosPendientes,
-        icon: CreditCard,
+        icon: markRaw(CreditCard), 
         colorTexto: "text-violet-600",
         colorBg: "bg-violet-100",
         footer: `${props.totalPrestamos} registros en total`
@@ -121,11 +121,10 @@ const stats = computed( () => [
         id: 4,
         label: "Gasto Total",
         value: `$${props.totalGastos.toLocaleString('es-MX')}`,
-        icon: Wallet,
+        icon: markRaw(Wallet), 
         colorTexto: "text-rose-600",
         colorBg: "bg-rose-100",
         footer: `Promedio $${props.promedioGasto.toLocaleString('es-MX')}`
     }
 ]);
-
 </script>

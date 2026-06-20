@@ -1,71 +1,241 @@
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Swal from 'sweetalert2';
+import { API_URL } from '../constants/api';
 
 export function useFinance() {
-    //Datos Haardcodeados
-    const movimientos = ref([
-        // Ingresos viejos (fuera del rango de 7 días, no salen en la gráfica pero suman al total)
-        { id: 1, tipo: "ingreso", categoria: "Sueldo", descripcion: "Quincena", monto: 12000, fecha: "2026-06-01" },
-        
-        // Gastos
-        { id: 2, tipo: "gasto", categoria: "Alimentación", descripcion: "Walmart", monto: 1500, fecha: "2026-06-05" },
-        { id: 3, tipo: "gasto", categoria: "Servicios", descripcion: "Internet", monto: 600, fecha: "2026-06-06" },
-        
-        // 🔥 INGRESOS NUEVOS (Para llenar el Histograma) 🔥
-        { id: 4, tipo: "ingreso", categoria: "Ventas", descripcion: "Venta teclado", monto: 800, fecha: "2026-06-04" },
-        { id: 5, tipo: "ingreso", categoria: "Ventas", descripcion: "Venta monitor", monto: 2500, fecha: "2026-06-05" },
-        { id: 6, tipo: "ingreso", categoria: "Sueldo", descripcion: "Bono", monto: 1200, fecha: "2026-06-07" },
-        { id: 7, tipo: "ingreso", categoria: "Ventas", descripcion: "Juego de PS5", monto: 950, fecha: "2026-06-08" },
-        { id: 8, tipo: "ingreso", categoria: "Sueldo", descripcion: "Reintegro obra social", monto: 3400, fecha: "2026-06-09" }
-    ]);
 
-    const prestamos = ref([
-        { id: 1, tipo: "prestado", deudor: "Carlos", concepto: "Para la renta", monto: 1500, estado: "Pendiente", fechaPago: "2026-06-15" },
-        { id: 2, tipo: "pedido", deudor: "Mamá", concepto: "Emergencia médica", monto: 800, estado: "Saldado", fechaPago: "2026-06-10" }
-    ]);
+    const movimientos = ref([]);
+    const prestamos   = ref([]);
+    const metas       = ref([]);
+    const pagares     = ref([]);
+    const loading     = ref(false);
+    const error       = ref(null);
 
-    const metas = ref([
-        { id: 1, titulo: "Fondo de Emergencia", montoObjetivo: 15000, montoActual: 5000, fechaLimite: "2026-12-31" },
-        { id: 2, titulo: "Viaje a Cancún", montoObjetivo: 25000, montoActual: 3500, fechaLimite: "2027-03-15" }
-    ]);
+    const usuario  = JSON.parse(localStorage.getItem('user') || '{}');
+    const esPremium = usuario.rol === 'premium';
 
-    const pagares = ref([
-        { id: 1, deudor: 'Carlos Martínez', monto: 5000, vencimiento: '2026-07-15', estado: 'Al corriente' },
-        { id: 2, deudor: 'Ana Perea', monto: 9500, vencimiento: '2026-06-01', estado: 'Atrasado' }
-    ])
+    const getHeaders = () => ({
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+    });
 
     // ─────────────────────────────────────────
-    // 2. MATEMÁTICAS Y ESTADÍSTICAS
+    // CARGA INICIAL (se llama en onMounted)
     // ─────────────────────────────────────────
-    const totalIngresos = computed(() => movimientos.value.filter(m => m.tipo === "ingreso").reduce((a, m) => a + m.monto, 0));
-    const totalGastos = computed(() => movimientos.value.filter(m => m.tipo === "gasto").reduce((a, m) => a + m.monto, 0));
+    const cargarDatos = async () => {
+        loading.value = true;
+        error.value   = null;
+        try {
+            const [movRes, preRes, metRes] = await Promise.all([
+                fetch(`${API_URL}/api/finance/movimientos`, { headers: getHeaders() }),
+                fetch(`${API_URL}/api/finance/prestamos`,   { headers: getHeaders() }),
+                fetch(`${API_URL}/api/finance/metas`,       { headers: getHeaders() }),
+            ]);
+
+            if (!movRes.ok || !preRes.ok || !metRes.ok)
+                throw new Error('Error al cargar datos financieros');
+
+            movimientos.value = await movRes.json();
+            prestamos.value   = await preRes.json();
+            metas.value       = await metRes.json();
+
+            // Solo cargamos pagarés si es usuario premium
+            if (esPremium) {
+                const pagRes = await fetch(`${API_URL}/api/finance/pagares`, { headers: getHeaders() });
+                if (pagRes.ok) pagares.value = await pagRes.json();
+            }
+        } catch (err) {
+            error.value = err.message;
+            console.error('useFinance.cargarDatos:', err);
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    // ─────────────────────────────────────────
+    // COMPUTED  (igual que antes, pero +monto)
+    // ─────────────────────────────────────────
+    const totalIngresos = computed(() =>
+        movimientos.value
+            .filter(m => m.tipo === 'ingreso')
+            .reduce((a, m) => a + +m.monto, 0)
+    );
+
+    const totalGastos = computed(() =>
+        movimientos.value
+            .filter(m => m.tipo === 'gasto')
+            .reduce((a, m) => a + +m.monto, 0)
+    );
+
     const saldoActual = computed(() => totalIngresos.value - totalGastos.value);
 
-    // Agrupamos gastos para la gráfica de pastel
     const gastosPorCategoria = computed(() => {
         const agrupado = {};
-        movimientos.value.filter(m => m.tipo === "gasto").forEach(g => {
-            if (!agrupado[g.categoria]) agrupado[g.categoria] = 0;
-            agrupado[g.categoria] += g.monto;
-        });
+        movimientos.value
+            .filter(m => m.tipo === 'gasto')
+            .forEach(g => {
+                agrupado[g.categoria] = (agrupado[g.categoria] || 0) + +g.monto;
+            });
         return agrupado;
     });
 
-    const totalPrestado = computed(() => prestamos.value.filter(p => p.tipo === "prestado").reduce((a, p) => a + p.monto, 0));
-    const totalDeuda = computed(() => prestamos.value.filter(p => p.tipo === "pedido" && p.estado === "Pendiente").reduce((a, p) => a + p.monto, 0));
-    const totalAhorradoEnMetas = computed(() => metas.value.reduce((a, m) => a + m.montoActual, 0));
+    const totalPrestado = computed(() =>
+        prestamos.value
+            .filter(p => p.tipo === 'prestado')
+            .reduce((a, p) => a + +p.monto, 0)
+    );
+
+    const totalDeuda = computed(() =>
+        prestamos.value
+            .filter(p => p.tipo === 'pedido' && p.estado === 'Pendiente')
+            .reduce((a, p) => a + +p.monto, 0)
+    );
+
+    const totalAhorradoEnMetas = computed(() =>
+        metas.value.reduce((a, m) => a + +m.montoActual, 0)
+    );
 
     // ─────────────────────────────────────────
-    // 3. FUNCIONES CRUD BÁSICAS
+    // CRUD — MOVIMIENTOS
     // ─────────────────────────────────────────
-    const registrarMovimiento = (datos) => { /* Lógica de guardado a BD irá acá */ };
-    const registrarPrestamo = (datos) => { /* Lógica de guardado a BD irá acá */ };
-    const registrarMeta = (datos) => { /* Lógica de guardado a BD irá acá */ };
+    const registrarMovimiento = async (datos) => {
+        try {
+            const res  = await fetch(`${API_URL}/api/finance/movimientos`, {
+                method:  'POST',
+                headers: getHeaders(),
+                body:    JSON.stringify(datos)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            movimientos.value.unshift(data);
+            Swal.fire({ title: '¡Movimiento registrado!', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
+            return true;
+        } catch (err) {
+            Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
+            return false;
+        }
+    };
+
+    // ─────────────────────────────────────────
+    // CRUD — PRÉSTAMOS
+    // ─────────────────────────────────────────
+    const registrarPrestamo = async (datos) => {
+        try {
+            const res  = await fetch(`${API_URL}/api/finance/prestamos`, {
+                method:  'POST',
+                headers: getHeaders(),
+                body:    JSON.stringify(datos)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            prestamos.value.unshift(data);
+            Swal.fire({ title: '¡Préstamo registrado!', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
+            return true;
+        } catch (err) {
+            Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
+            return false;
+        }
+    };
+
+    const saldarPrestamo = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/api/finance/prestamos/${id}/saldar`, {
+                method:  'PUT',
+                headers: getHeaders()
+            });
+            if (!res.ok) throw new Error('No se pudo saldar el préstamo');
+            const idx = prestamos.value.findIndex(p => p.id === id);
+            if (idx !== -1) prestamos.value[idx].estado = 'Saldado';
+            Swal.fire({ title: '¡Saldado!', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
+            return true;
+        } catch (err) {
+            Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
+            return false;
+        }
+    };
+
+    // ─────────────────────────────────────────
+    // CRUD — METAS
+    // ─────────────────────────────────────────
+    const registrarMeta = async (datos) => {
+        try {
+            const res  = await fetch(`${API_URL}/api/finance/metas`, {
+                method:  'POST',
+                headers: getHeaders(),
+                body:    JSON.stringify(datos)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            metas.value.unshift(data);
+            Swal.fire({ title: '¡Meta creada!', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
+            return true;
+        } catch (err) {
+            Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
+            return false;
+        }
+    };
+
+    const abonarMeta = async (id, abono) => {
+        try {
+            const res = await fetch(`${API_URL}/api/finance/metas/${id}/abonar`, {
+                method:  'PUT',
+                headers: getHeaders(),
+                body:    JSON.stringify({ abono })
+            });
+            if (!res.ok) throw new Error('No se pudo abonar a la meta');
+            const idx = metas.value.findIndex(m => m.id === id);
+            if (idx !== -1) metas.value[idx].montoActual = +metas.value[idx].montoActual + +abono;
+            Swal.fire({ title: '¡Abono registrado!', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
+            return true;
+        } catch (err) {
+            Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
+            return false;
+        }
+    };
+
+    // ─────────────────────────────────────────
+    // CRUD — PAGARÉS (premium)
+    // ─────────────────────────────────────────
+    const registrarPagare = async (datos) => {
+        try {
+            const res  = await fetch(`${API_URL}/api/finance/pagares`, {
+                method:  'POST',
+                headers: getHeaders(),
+                body:    JSON.stringify(datos)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            pagares.value.unshift(data);
+            Swal.fire({ title: '¡Pagaré emitido!', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
+            return true;
+        } catch (err) {
+            Swal.fire({ title: 'Error', text: err.message, icon: 'error', confirmButtonColor: '#00B4B4' });
+            return false;
+        }
+    };
+
+    onMounted(cargarDatos);
 
     return {
+        // Estado
         movimientos, prestamos, metas, pagares,
+        loading, error,
+
+        // Computed
         totalIngresos, totalGastos, saldoActual, gastosPorCategoria,
         totalPrestado, totalDeuda, totalAhorradoEnMetas,
-        registrarMovimiento, registrarPrestamo, registrarMeta
+
+        // CRUD
+        registrarMovimiento,
+        registrarPrestamo, saldarPrestamo,
+        registrarMeta,     abonarMeta,
+        registrarPagare,
+
+        // Utilitario
+        cargarDatos
     };
 }

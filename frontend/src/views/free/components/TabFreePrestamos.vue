@@ -445,7 +445,6 @@ const formPrestamo = ref({
     tipo: 'prestado',
     deudor: '',
     concepto: '',
-    numeroTarjeta: '',
     monto: '',
     fecha_pago: ''
 });

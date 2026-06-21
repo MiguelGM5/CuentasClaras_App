@@ -2,12 +2,14 @@
 const props = defineProps({
   tipoPrestamo: String,
   nombre: String,
-  concepto: String
+  concepto: String,
+  numeroTarjeta: String
 })
 
 const emit = defineEmits([
   'update:nombre',
-  'update:concepto'
+  'update:concepto',
+  'update:numeroTarjeta'
 ])
 
 const conceptosPrestado = [
@@ -52,6 +54,12 @@ const obtenerConceptos = () => {
       "
     />
 
+    <input
+      :value="numeroTarjeta"
+      @input="emit('update:numeroTarjeta', $event.target.value)"
+      placeholder="Número de cuenta o tarjeta"
+    />
+
     <textarea
       :value="concepto"
       @input="emit('update:concepto', $event.target.value)"
@@ -63,7 +71,6 @@ const obtenerConceptos = () => {
     ></textarea>
 
     <div class="tags">
-
       <button
         v-for="item in obtenerConceptos()"
         :key="item"
@@ -71,7 +78,6 @@ const obtenerConceptos = () => {
       >
         {{ item }}
       </button>
-
     </div>
 
   </div>

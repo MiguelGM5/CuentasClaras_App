@@ -19,29 +19,26 @@ const {
 } = useDeudas()
 
 const tipoPrestamo = ref('prestado')
-
 const monto = ref(1000)
 
 const nombre = ref('')
 const concepto = ref('')
+const numeroTarjeta = ref('')
+
 
 const fechaPrestamo = ref('')
 const fechaPago = ref('')
+
 watch(tipoPrestamo, () => {
-
   monto.value = 1000
-
   nombre.value = ''
-
   concepto.value = ''
-
+  numeroTarjeta.value = ''
   fechaPrestamo.value = ''
-
   fechaPago.value = ''
-
 })
-const guardarPrestamo = async () => {
 
+const guardarPrestamo = async () => {
   if (!nombre.value) {
     alert('El nombre es obligatorio')
     return
@@ -52,12 +49,13 @@ const guardarPrestamo = async () => {
     monto: monto.value,
     nombre: nombre.value,
     concepto: concepto.value,
+    numeroTarjeta: numeroTarjeta.value,
     fechaPrestamo: fechaPrestamo.value,
     fechaPago: fechaPago.value,
     estado: 'Pendiente'
   })
 
-  alert('Registro exitoso')
+  alert('Registro exitoso y pagaré generado')
 }
 </script>
 
@@ -80,6 +78,7 @@ const guardarPrestamo = async () => {
         :tipoPrestamo="tipoPrestamo"
         v-model:nombre="nombre"
         v-model:concepto="concepto"
+        v-model:numeroTarjeta="numeroTarjeta"
       />
 
       <DateForm
@@ -106,6 +105,7 @@ const guardarPrestamo = async () => {
         :monto="monto"
         :nombre="nombre"
         :concepto="concepto"
+        :numeroTarjeta="numeroTarjeta"
         :fechaPrestamo="fechaPrestamo"
         :fechaPago="fechaPago"
       />
@@ -147,10 +147,8 @@ const guardarPrestamo = async () => {
 }
 
 @media (max-width: 1200px) {
-
   .container {
     grid-template-columns: 1fr;
   }
-
 }
 </style>

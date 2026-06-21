@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import { User, Mail, Phone, Calendar, Lock, Eye, EyeOff, Save, CheckCircle } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -8,40 +8,68 @@ const props = defineProps({
 
 const emit = defineEmits(['guardar', 'cambiarPassword']);
 
-// Copia local editable para no tocar el prop directamente
 const form = reactive({
-    nombre:           props.perfil.nombre,
-    apellidoPaterno:  props.perfil.apellidoPaterno,
-    apellidoMaterno:  props.perfil.apellidoMaterno,
-    email:            props.perfil.email,
-    telefono:         props.perfil.telefono,
-    fechaNacimiento:  props.perfil.fechaNacimiento
+    nombre: '',
+    apellidoPaterno: '',
+    apellidoMaterno: '',
+    email: '',
+    telefono: '',
+    fechaNacimiento: ''
 });
+
+watch(
+    () => props.perfil,
+    (nuevoPerfil) => {
+        form.nombre = nuevoPerfil.nombre || '';
+        form.apellidoPaterno = nuevoPerfil.apellidoPaterno || '';
+        form.apellidoMaterno = nuevoPerfil.apellidoMaterno || '';
+        form.email = nuevoPerfil.email || '';
+        form.telefono = nuevoPerfil.telefono || '';
+        form.fechaNacimiento = nuevoPerfil.fechaNacimiento || '';
+    },
+    { immediate: true, deep: true }
+);
 
 const passForm = reactive({ actual: '', nueva: '', confirmar: '' });
 const mostrarActual  = ref(false);
 const mostrarNueva   = ref(false);
 const guardadoOk     = ref(false);
 const passGuardadoOk = ref(false);
-
-const guardarDatos = () => {
-    emit('guardar', { ...form });
-    guardadoOk.value = true;
-    setTimeout(() => (guardadoOk.value = false), 2500);
-};
-
-const guardarPassword = () => {
-    if (!passForm.actual || !passForm.nueva || !passForm.confirmar) return;
-    if (passForm.nueva !== passForm.confirmar) return;
-    emit('cambiarPassword', passForm.actual, passForm.nueva);
-    passForm.actual = '';
-    passForm.nueva  = '';
-    passForm.confirmar = '';
-    passGuardadoOk.value = true;
-    setTimeout(() => (passGuardadoOk.value = false), 2500);
-};
-
 const errorConfirmar = ref(false);
+const errorMensaje   = ref('');
+
+const guardarDatos = async () => {
+    try {
+        errorMensaje.value = '';
+        await emit('guardar', { ...form });
+
+        guardadoOk.value = true;
+        setTimeout(() => (guardadoOk.value = false), 2500);
+    } catch (error) {
+        errorMensaje.value = error.message || 'Error al guardar datos';
+    }
+};
+
+const guardarPassword = async () => {
+    try {
+        errorMensaje.value = '';
+
+        if (!passForm.actual || !passForm.nueva || !passForm.confirmar) return;
+        if (passForm.nueva !== passForm.confirmar) return;
+
+        await emit('cambiarPassword', passForm.actual, passForm.nueva);
+
+        passForm.actual = '';
+        passForm.nueva = '';
+        passForm.confirmar = '';
+
+        passGuardadoOk.value = true;
+        setTimeout(() => (passGuardadoOk.value = false), 2500);
+    } catch (error) {
+        errorMensaje.value = error.message || 'Error al cambiar contraseña';
+    }
+};
+
 const validarConfirmar = () => {
     errorConfirmar.value = passForm.confirmar.length > 0 && passForm.nueva !== passForm.confirmar;
 };
@@ -69,6 +97,11 @@ const validarConfirmar = () => {
                     <CheckCircle :size="15" />
                     Cambios guardados correctamente
                 </div>
+
+                <div v-if="errorMensaje"
+                    class="flex items-center gap-2 bg-red-50 border border-red-100 text-red-700 text-sm font-bold px-4 py-3 rounded-xl mb-5">
+                        {{ errorMensaje }}
+                    </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <!-- Nombre -->

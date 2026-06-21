@@ -45,9 +45,8 @@ export const useDeudas = () => {
 
   return {
     deudas,
-  loading,
-  error,
-  cargarDeudas,
-  registrarDeuda
+    loading,
+    error,
+    registrarDeuda
   }
 }

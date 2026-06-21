@@ -1,6 +1,6 @@
 <script setup>
 	import { ref, computed } from 'vue';
-	import { Mail, Lock, Facebook, Apple, Chrome } from 'lucide-vue-next';
+	import { Mail, Lock, Eye, EyeOff, Facebook, Apple, Chrome } from 'lucide-vue-next';
 	import { RouterLink } from 'vue-router';
 	import { useLogin } from '../../composables/auth/useLogin';
 
@@ -10,6 +10,8 @@
         loading,
         manejadorLogin
 	} = useLogin();
+
+	const mostrarPassword = ref(false);
 
 	//const router = useRouter()
 </script>
@@ -61,10 +63,18 @@
 							<Lock :size="18" class="text-gray-400" />
 							<input
 								v-model="password" 
-								type="password" 
+								:type="mostrarPassword ? 'text' : 'password'" 
 								placeholder="Ingresa tu contraseña" 
 								class="w-full outline-none text-gray-700 py-1 bg-transparent" 
 							/>
+							<button
+								type="button"
+								@click="mostrarPassword = !mostrarPassword"
+								class="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+								:aria-label="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+							>
+								<component :is="mostrarPassword ? EyeOff : Eye" :size="18" />
+							</button>
 						</div>
 					</div>
 

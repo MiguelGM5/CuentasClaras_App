@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed } from 'vue';
-    import { User, Mail, Lock } from 'lucide-vue-next';
+    import { User, Mail, Lock, Eye, EyeOff } from 'lucide-vue-next';
     import { RouterLink } from 'vue-router';
     import { useRegister } from '../../composables/auth/useRegister.js';
     import ValidadorCampos from '../../components/registro/ValidadorCampos.vue';
@@ -19,6 +19,9 @@
         validForm,
         manejadorRegistro,
     } = useRegister();
+
+    const mostrarPassword = ref(false);
+    const mostrarConfirmPassword = ref(false);
 
 </script>
 <template>
@@ -113,10 +116,18 @@
                             <Lock :size="18" class="text-gray-400" />
                             <input 
                                 v-model="password"
-                                type="password" 
+                                :type="mostrarPassword ? 'text' : 'password'" 
                                 placeholder="Crea una contraseña" 
                                 class="w-full outline-none text-gray-700 py-1 bg-transparent" 
                             />
+                            <button
+                                type="button"
+                                @click="mostrarPassword = !mostrarPassword"
+                                class="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                                :aria-label="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                            >
+                                <component :is="mostrarPassword ? EyeOff : Eye" :size="18" />
+                            </button>
                         </div>
                     </div>
                     
@@ -128,10 +139,18 @@
                             <Lock :size="18" class="text-gray-400" />
                             <input 
                                 v-model="confirmPassword"
-                                type="password" 
+                                :type="mostrarConfirmPassword ? 'text' : 'password'" 
                                 placeholder="Repite tu contraseña" 
                                 class="w-full outline-none text-gray-700 py-1 bg-transparent" 
                             />
+                            <button
+                                type="button"
+                                @click="mostrarConfirmPassword = !mostrarConfirmPassword"
+                                class="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                                :aria-label="mostrarConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                            >
+                                <component :is="mostrarConfirmPassword ? EyeOff : Eye" :size="18" />
+                            </button>
                         </div>
                     </div>
                     <ValidadorCampos :visible="confirmPassword.length > 0" :requisites="validConfirmedPass"/>

@@ -58,7 +58,7 @@ const subtituloSidebar = computed(() => esPremiumSesion.value ? 'Plan Premium' :
 
         <Sidebar
             modelValue=""
-            :subtitulo="subtituloSidebar"
+            :subtitulo="rolUsuario"
             :isPremium="esPremiumSesion"
             :items="menuItems"
             :usuario="datosSidebar"

@@ -125,21 +125,55 @@ const financeController = {
             res.json(data);
         } catch (err) {
             console.error('getPagares:', err);
-            res.status(500).json({ message: 'Error al obtener pagarés' });
+            res.status(500).json({ 
+                title: 'Error interno',
+                text: 'Error al obtener los pagarés',
+                icon: 'error'
+            });
         }
     },
 
     createPagare: async (req, res) => {
         try {
-            const { deudor, monto, vencimiento } = req.body;
-            if (!deudor || !monto || !vencimiento)
-                return res.status(400).json({ message: 'Deudor, monto y vencimiento son requeridos' });
+            const { folio, deudor, monto_solicitado, fecha_vencimiento, interes_moratorio, firma } = req.body;
 
-            const id = await Finance.createPagare(req.usuario.id, { deudor, monto, vencimiento });
-            res.status(201).json({ id, deudor, monto: +monto, vencimiento, estado: 'Al corriente' });
+            // Validación con SweetAlert payload
+            if (!deudor || !monto_solicitado || !fecha_vencimiento || !firma) {
+                return res.status(400).json({ 
+                    title: 'Datos Incompletos',
+                    text: 'El deudor, monto, fecha de vencimiento y firma son obligatorios.',
+                    icon: 'warning'
+                });
+            }
+
+            const id = await Finance.createPagare(req.usuario.id, { 
+                folio, deudor, monto_solicitado, fecha_vencimiento, interes_moratorio, firma 
+            });
+
+            // ✅ ÉXITO CON SWEETALERT PAYLOAD INCLUIDO
+            res.status(201).json({
+                title: '¡Pagaré Generado!',
+                text: 'El documento fue generado con éxito.',
+                icon: 'success',
+                data: { 
+                    id, 
+                    folio: folio || `PAG-${id}`, 
+                    deudor, 
+                    monto_solicitado: +monto_solicitado, 
+                    fecha_vencimiento, 
+                    interes_moratorio: interes_moratorio || 0,
+                    firma,
+                    estado: 'Al corriente' 
+                }
+            });
+
         } catch (err) {
             console.error('createPagare:', err);
-            res.status(500).json({ message: 'Error al emitir el pagaré' });
+            res.status(500).json({ 
+                title: 'Error del Servidor',
+                text: 'Hubo un problema al emitir el pagaré legal.',
+                icon: 'error' 
+            });
         }
     }
 };

@@ -120,22 +120,31 @@ const Finance = {
     // ─────────────────────────────────────────
     getPagares: async (usuarioId) => {
         const [rows] = await db.execute(
-            `SELECT id, usuario_id, deudor, monto, estado,
-                    DATE_FORMAT(vencimiento, '%Y-%m-%d') AS vencimiento,
-                    createdAt
-             FROM test.pagares
-             WHERE usuario_id = ?
-             ORDER BY vencimiento ASC`,
+            `SELECT id, usuario_id, folio, deudor, monto_solicitado, estado, interes_moratorio, firma,
+                    DATE_FORMAT(fecha_vencimiento, '%Y-%m-%d') AS fecha_vencimiento,
+                    DATE_FORMAT(createdAt, '%Y-%m-%d') AS createdAt
+            FROM test.pagares
+            WHERE usuario_id = ? AND deletedAt IS NULL
+            ORDER BY fecha_vencimiento ASC`,
             [usuarioId]
         );
         return rows;
     },
 
-    createPagare: async (usuarioId, { deudor, monto, vencimiento }) => {
+    createPagare: async (usuarioId, { folio, deudor, monto_solicitado, fecha_vencimiento, interes_moratorio, firma }) => {
         const [result] = await db.execute(
-            `INSERT INTO test.pagares (usuario_id, deudor, monto, vencimiento)
-             VALUES (?, ?, ?, ?)`,
-            [usuarioId, deudor, monto, vencimiento]
+            `INSERT INTO test.pagares 
+                (usuario_id, folio, deudor, monto_solicitado, fecha_vencimiento, interes_moratorio, firma, estado)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'Al corriente')`,
+            [
+                usuarioId, 
+                folio || null, 
+                deudor, 
+                monto_solicitado, 
+                fecha_vencimiento, 
+                interes_moratorio || 0.00, 
+                firma || null
+            ]
         );
         return result.insertId;
     }

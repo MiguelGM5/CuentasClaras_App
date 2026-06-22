@@ -48,7 +48,9 @@
 
                     @crearMovimiento="manejarCrearMovimiento"
                     @crearPrestamo="manejarCrearPrestamo"
-                    @saldarPrestamo="manejarSaldarPrestamo" 
+                    @saldarPrestamo="manejarSaldarPrestamo"
+                    
+                    @pagareCreado="manejarCrearPagare"
                 />
             </KeepAlive>
         </main>
@@ -73,15 +75,27 @@ import TabPremiumPagares from "./components/TabPremiumPagares.vue";
 const router = useRouter();
 
 // ── Usuario en sesión ──────────────────────────────────────────────
-const usuarioSesion = JSON.parse(localStorage.getItem('user') || '{}');
-const rolUsuario = usuarioSesion.rol ?? 'user';
-const esPremium = computed(() => rolUsuario === 'premium');
+const obtenerUsuarioActual = () => JSON.parse(localStorage.getItem('user') || '{}');
 
-const datosSidebar = {
-    nombre: `${usuarioSesion.nombre ?? ''} ${usuarioSesion.apellido_paterno ?? ''}`.trim(),
-    inicial: (usuarioSesion.nombre ?? 'U').charAt(0).toUpperCase()
-};
+// Convertimos el rol en una computed para que se refresque sola
+const rolUsuario = computed(() => {
+    const u = obtenerUsuarioActual();
+    // Atajamos tanto 'rol' como 'nombre_rol' y forzamos minúsculas por seguridad
+    const r = u.rol || u.nombre_rol || 'user';
+    return r.toString().trim().toLowerCase();
+});
 
+// Ahora esPremium reacciona al toque ante cualquier cambio
+const esPremium = computed(() => rolUsuario.value === 'premium');
+
+// Los datos del Sidebar también se recalculan si el usuario cambia algo
+const datosSidebar = computed(() => {
+    const u = obtenerUsuarioActual();
+    return {
+        nombre: `${u.nombre ?? ''} ${u.apellido_paterno ?? ''}`.trim() || 'Usuario',
+        inicial: (u.nombre ?? 'U').charAt(0).toUpperCase()
+    };
+});
 // ── Composable financiero (datos reales desde la BD) ───────────────
 const {
     movimientos, prestamos, metas, pagares, loading,
@@ -101,6 +115,12 @@ onMounted(() => {
         });
         toast.fire({ icon: 'success', title: `Bienvenido, ${datosSidebar.nombre}` });
         sessionStorage.removeItem('recentLogin');
+    }
+
+    const tabPendiente = localStorage.getItem('navegar_a_tab');
+    if (tabPendiente) {
+        tabActivo.value = tabPendiente;
+        localStorage.removeItem('navegar_a_tab'); 
     }
 });
 
@@ -170,6 +190,10 @@ const manejarCrearPrestamo = async (payload) => {
 
 const manejarSaldarPrestamo = async (id) => {
     await saldarPrestamo(id);
+};
+
+const manejarCrearPagare = (nuevoPagareCompletado) => {
+    pagares.value.push(nuevoPagareCompletado);
 };
 </script>
 

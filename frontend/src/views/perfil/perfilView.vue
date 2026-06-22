@@ -1,58 +1,3 @@
-<script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { User, CreditCard, PieChart, ArrowRightLeft, Target } from 'lucide-vue-next';
-
-import { usePerfil } from '../../composables/usePerfil.js';
-import Sidebar from '../../components/layout/Sidebar.vue';
-import TabPerfilDatos from './components/TabPerfilDatos.vue';
-import TabPerfilSuscripcion from './components/TabPerfilSuscripcion.vue';
-
-const router = useRouter();
-
-const {
-    perfil, historialPagos,
-    nombreCompleto, esPremium, diasComoMiembro,
-    guardarPerfil, cambiarPassword,
-    cancelarSuscripcion, actualizarSuscripcion
-} = usePerfil();
-
-// Tab activo del contenido (Datos / Suscripcion)
-const tabActivo = ref('datos');
-
-const tabsConfig = {
-    datos:       TabPerfilDatos,
-    suscripcion: TabPerfilSuscripcion
-};
-
-// Menu lateral identico al del freeDashboardView (sin entrada "Perfil",
-// porque a esta vista se accede desde el boton inferior del Sidebar)
-const menuItems = [
-    { key: 'overview',    label: 'Mi Resumen',     icon: PieChart       },
-    { key: 'movimientos', label: 'Mis Movimientos', icon: ArrowRightLeft },
-    { key: 'prestamos',   label: 'Prestamos',       icon: CreditCard     },
-    { key: 'metas',       label: 'Metas Ahorro',    icon: Target         },
-];
-
-// El Sidebar siempre vuelve al dashboard cuando se clickea un item del menu,
-// ya que estamos parados en la vista de Perfil, no en el dashboard con tabs
-const irADashboard = () => {
-    router.push('/user/dashboard');
-};
-
-// ── Usuario en sesion (mismo patron que freeDashboardView) ──────────
-const usuarioSesion = JSON.parse(localStorage.getItem('user') || '{}');
-const rolUsuario   = usuarioSesion.rol ?? 'user';
-const esPremiumSesion = computed(() => rolUsuario === 'premium');
-
-const datosSidebar = computed(() => ({
-    nombre:  nombreCompleto.value || `${usuarioSesion.nombre ?? ''} ${usuarioSesion.apellido_paterno ?? ''}`.trim(),
-    inicial: (perfil.value.nombre || usuarioSesion.nombre || 'U').charAt(0).toUpperCase()
-}));
-
-const subtituloSidebar = computed(() => esPremiumSesion.value ? 'Plan Premium' : 'Plan Free');
-</script>
-
 <template>
     <div class="min-h-screen bg-slate-50 flex font-sans">
 
@@ -62,7 +7,7 @@ const subtituloSidebar = computed(() => esPremiumSesion.value ? 'Plan Premium' :
             :isPremium="esPremiumSesion"
             :items="menuItems"
             :usuario="datosSidebar"
-            @update:modelValue="irADashboard"
+            @update:modelValue="navegarDesdePerfil"
         />
 
         <main class="ml-60 flex-1 p-8 min-h-screen">
@@ -79,10 +24,10 @@ const subtituloSidebar = computed(() => esPremiumSesion.value ? 'Plan Premium' :
                         </h1>
                         <p class="text-sm text-slate-400 mt-0.5">{{ perfil.email }}</p>
                         <span
-                            :class="esPremium ? 'bg-teal-50 text-[#00B4B4] border-teal-100' : 'bg-slate-100 text-slate-500 border-slate-200'"
-                            class="inline-flex items-center gap-1 text-[11px] font-black border px-2.5 py-1 rounded-full mt-2"
+                            :class="esPremium ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-100 text-slate-500 border-slate-200'"
+                            class="inline-flex items-center gap-1 text-md font-black border px-2.5 py-1 rounded-full mt-2"
                         >
-                            <CreditCard :size="10" />
+                            <CreditCard :size="13" />
                             Plan {{ esPremium ? 'Premium' : 'Gratuito' }}
                         </span>
                     </div>
@@ -91,7 +36,9 @@ const subtituloSidebar = computed(() => esPremiumSesion.value ? 'Plan Premium' :
                 <div class="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl px-5 py-3 shadow-sm">
                     <div class="text-right">
                         <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Miembro desde</p>
-                        <p class="text-base font-black text-slate-800">{{ diasComoMiembro }} dias</p>
+                        <p class="text-base font-black text-slate-800">
+                            {{ isNaN(Number(diasComoMiembro)) ? 0 : diasComoMiembro }} días
+                        </p>
                     </div>
                 </div>
             </div>
@@ -114,7 +61,7 @@ const subtituloSidebar = computed(() => esPremiumSesion.value ? 'Plan Premium' :
                         : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'"
                     class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all"
                 >
-                    <CreditCard :size="13" /> Suscripcion
+                    <CreditCard :size="13" /> Suscripción
                 </button>
             </div>
 
@@ -124,7 +71,6 @@ const subtituloSidebar = computed(() => esPremiumSesion.value ? 'Plan Premium' :
                 :perfil="perfil"
                 :historialPagos="historialPagos"
                 :esPremium="esPremium"
-                @guardar="guardarPerfil"
                 @cambiarPassword="cambiarPassword"
                 @actualizar="actualizarSuscripcion"
                 @cancelar="cancelarSuscripcion"
@@ -133,3 +79,72 @@ const subtituloSidebar = computed(() => esPremiumSesion.value ? 'Plan Premium' :
         </main>
     </div>
 </template>
+
+<script setup>
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { User, CreditCard, PieChart, ArrowRightLeft, Target, FileSignature } from 'lucide-vue-next';
+
+import { usePerfil } from '../../composables/usePerfil.js';
+import Sidebar from '../../components/layout/Sidebar.vue';
+import TabPerfilDatos from './components/TabPerfilDatos.vue';
+import TabPerfilSuscripcion from './components/TabPerfilSuscripcion.vue';
+
+const router = useRouter();
+
+const {
+    perfil, historialPagos,
+    nombreCompleto, esPremium, diasComoMiembro,
+    cambiarPassword, cancelarSuscripcion, actualizarSuscripcion
+} = usePerfil();
+
+// Tab activo del contenido (Datos / Suscripcion)
+const tabActivo = ref('datos');
+
+const tabsConfig = {
+    datos:       TabPerfilDatos,
+    suscripcion: TabPerfilSuscripcion
+};
+
+// ── LOGICA INTELIGENTE DE RETORNO AL DASHBOARD ──────────────────
+const navegarDesdePerfil = (destinoKey) => {
+    localStorage.setItem('navegar_a_tab', destinoKey);
+    router.push('/user/dashboard');
+};
+
+// ── Usuario en sesion ───────────────────────────────────────────────
+const obtenerUsuarioActual = () => JSON.parse(localStorage.getItem('user') || '{}');
+
+const rolUsuario = computed(() => {
+    const u = obtenerUsuarioActual();
+    const r = u.rol || u.nombre_rol || 'user';
+    return r.toString().trim().toLowerCase();
+});
+
+const esPremiumSesion = computed(() => rolUsuario.value === 'premium');
+
+const datosSidebar = computed(() => {
+    const u = obtenerUsuarioActual();
+    return {
+        nombre: nombreCompleto.value || `${u.nombre ?? ''} ${u.apellido_paterno ?? ''}`.trim() || 'Usuario',
+        inicial: (perfil.value.nombre || u.nombre || 'U').charAt(0).toUpperCase()
+    };
+});
+
+const menuItems = computed(() => {
+    const items = [
+        { key: 'overview',    label: 'Mi Resumen',     icon: PieChart },
+        { key: 'movimientos', label: 'Mis Movimientos', icon: ArrowRightLeft },
+        { key: 'prestamos',   label: 'Préstamos',       icon: CreditCard },
+        { key: 'metas', label: 'Metas Ahorro', icon: Target }
+    ];
+
+    // Si es VIP, le inyectamos los pagarés antes de las metas
+    if (esPremiumSesion.value) {
+        items.push({ key: 'pagares', label: 'Pagarés Legales', icon: FileSignature });
+    }
+    
+    return items;
+});
+
+</script>

@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import {
   obtenerDeudas,
   crearDeuda
-} from '../services/deudasService'
+} from '../../services/deudasService'
 
 export const useDeudas = () => {
   const deudas = ref([])

@@ -35,7 +35,7 @@ const loginController = {
                 apellido_materno: usuario.apellido_materno,
                 email: usuario.email,
                 rol: usuario.nombre_rol,
-                createdAt: usuario.createdAt
+                dias_miembro: usuario.dias_miembro
             }
 
             res.status(200).json({

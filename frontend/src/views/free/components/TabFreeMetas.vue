@@ -3,7 +3,7 @@
         
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
-                <h2 class="text-3xl font-black text-slate-800 tracking-tight">Tus Metas de Ahorro</h2>
+                <h2 class="text-3xl font-black text-slate-800 tracking-tight">Mis Metas de Ahorro</h2>
                 <p class="text-md text-slate-400 mt-1">Gestiona y abona a tus objetivos financieros</p>
             </div>
             <button @click="abrirCrear"

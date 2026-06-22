@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuth } from '../composables/auth/useAuth.js';
 
 const LoginView = () => import('../views/auth/Login.vue');
-const PrestamosView = () => import('../views/PrestamosView.vue');
 const RegisterView = () => import('../views/auth/RegisterView.vue');
 const AdminDashboardView = ()=> import('../views/admin/adminDashboardView.vue');
 const FreeDashboardView = ()=> import('../views/free/freeDashboardView.vue');
@@ -14,11 +13,6 @@ const routes = [
 		name: 'Login',
 		component: LoginView
 	},
-  	{
-    	path: '/prestamos',
-		name: "Prestamos",
-    	component: PrestamosView
-  	},
 	{
 		path: '/registro',
 		name: 'Registro',
@@ -28,13 +22,13 @@ const routes = [
 		path: '/admin/dashboard',
 		name: 'Admin',
 		component: AdminDashboardView,
-		//meta:{requiresAuth: true, rolesPermitidos: ["super_admin"]}
+		meta:{requiresAuth: true, rolesPermitidos: ["superAdmin"]}
 	},
 	{
 		path: '/admin/perfil',
 		name: 'PerfilAdmin',
 		component: PerfilView,
-		//meta:{requiresAuth: true, rolesPermitidos: ["super_admin"]}
+		meta:{requiresAuth: true, rolesPermitidos: ["superAdmin"]}
 	},
 	{
 		path: '/user/dashboard',
@@ -46,7 +40,7 @@ const routes = [
 		path: '/user/perfil',
 		name: 'Perfil',
 		component: PerfilView,
-		// meta: { requiresAuth: true }
+		 meta: { requiresAuth: true }
 	}
 ]
 

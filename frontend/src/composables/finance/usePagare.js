@@ -3,9 +3,11 @@ import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import { API_URL } from '../../constants/api';
 import { usePerfil } from '../usePerfil';
+import { obtenerHoy } from '../../utils/date';
 
-export function usePagares(emit) {
+export function usePagares(props, emit) {
     // ── ESTADO ──────────────────────────────────────────────
+    const fechaHoy = obtenerHoy();
     const pagares = ref([]);
     const modalPagare = ref(false);
     const formPagare = ref({ folio: '', deudor: '', monto_solicitado: '', fecha_vencimiento: '', interes_moratorio: '10', firma: '' });
@@ -13,9 +15,31 @@ export function usePagares(emit) {
     let isDrawing = false;
     let ctx = null;
     const { nombreCompleto } = usePerfil();
-    const pagaresAlCorriente = computed(() => pagares.value.filter(p => p.estado === 'Al corriente').length);
-    const pagaresAtrasados = computed(() => pagares.value.filter(p => p.estado === 'Atrasado').length);
-    const totalProtegido = computed(() => pagares.value.filter(p => p.estado !== 'liquidado').reduce((acc, p) => acc + Number(p.monto_solicitado), 0));
+    
+    const pagaresAlCorriente = computed(() => {
+        if (!props.pagares) return 0; // Si no hay datos, devolvemos 0
+        return props.pagares.filter(p => {
+            // Si viene nulo o vacío, asumimos 'al corriente'. Le quitamos espacios y lo hacemos minúscula.
+            const estadoSeguro = (p.estado || 'al corriente').trim().toLowerCase();
+            return estadoSeguro === 'al corriente';
+        }).length;
+    });
+
+    const pagaresAtrasados = computed(() => {
+        if (!props.pagares) return 0;
+        return props.pagares.filter(p => {
+            const estadoSeguro = (p.estado || '').trim().toLowerCase();
+            return estadoSeguro === 'atrasado';
+        }).length;
+    });
+
+    const totalProtegido = computed(() => {
+        if (!props.pagares) return 0;
+        return props.pagares.filter(p => {
+            const estadoSeguro = (p.estado || '').trim().toLowerCase();
+            return estadoSeguro !== 'liquidado'; // Suma todos los que NO estén liquidados
+        }).reduce((acc, p) => acc + Number(p.monto_solicitado || 0), 0);
+    });
 
     // ── CONFIGURACIÓN API ───────────────────────────────────
     const getHeaders = () => ({
@@ -29,6 +53,28 @@ export function usePagares(emit) {
             if (!res.ok) throw new Error('Error al cargar pagarés');
             pagares.value = await res.json();
         } catch (err) { console.error(err); }
+    };
+
+    const cambiarEstadoPagare = async (id, nuevoEstado) => {
+        try {
+            const res = await fetch(`${API_URL}/api/finance/pagares/${id}/estado`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify({ estado: nuevoEstado })
+            });
+
+            if (!res.ok) throw new Error('Fallo al actualizar');
+
+            // Actualizamos la tabla visualmente en Vue (Mutamos el prop)
+            const index = props.pagares.findIndex(p => p.id === id);
+            if (index !== -1) {
+                props.pagares[index].estado = nuevoEstado;
+            }
+
+            Swal.fire({ title: '¡Estado Actualizado!', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+        } catch (error) {
+            Swal.fire({ title: 'Error', text: 'No se pudo cambiar el estado', icon: 'error', confirmButtonColor: '#f59e0b' });
+        }
     };
 
     // ── LÓGICA DE UI Y CANVAS ───────────────────────────────
@@ -90,6 +136,10 @@ export function usePagares(emit) {
 
     // ── GUARDADO Y API ──────────────────────────────────────
     const guardarNuevoPagare = async () => {
+        if(formPagare.value.fecha_vencimiento < fechaHoy){
+            return Swal.fire({ title: 'Error', text: 'No se puede usar una fecha menor a la de hoy', icon: 'error', confirmButtonColor: '#f59e0b' });
+        }
+        
         if (!formPagare.value.deudor || !formPagare.value.monto_solicitado || !formPagare.value.fecha_vencimiento) {
             return Swal.fire({ title: 'Datos incompletos', text: 'El deudor, monto y fecha son obligatorios.', icon: 'warning', confirmButtonColor: '#f59e0b' });
         }
@@ -118,7 +168,7 @@ export function usePagares(emit) {
             if (response.ok && resData.data) {
                 pagares.value.push(resData.data);
                 modalPagare.value = false;
-                if(emit) emit('pagareCreado', resData.data); // Opcional si usas el push local
+                if(emit) emit('pagareCreado', resData.data);
             }
         } catch (error) {
             Swal.fire({ title: 'Sin conexión', text: 'No pudimos comunicarnos con el servidor.', icon: 'error', confirmButtonColor: '#f59e0b' });
@@ -127,6 +177,7 @@ export function usePagares(emit) {
 
     // ── LÓGICA PDF ───────────────────────────────────────────
     const formatearDinero = (m) => isNaN(m) ? "0.00" : Number(m).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
     const formatearFechaFormatoLargo = (fechaStr) => {
         if (!fechaStr) return '';
         const [year, month, day] = fechaStr.split('T')[0].split('-');
@@ -135,52 +186,91 @@ export function usePagares(emit) {
 
     const descargarPDF = (pagare) => {
         const doc = new jsPDF({ orientation: "landscape" });
-        const prestador = nombreCompleto.value || 'Sociedad Mexicana de Anestesiología';
+        
+        // Autoría institucional obligatoria ante ausencia de un firmante explícito
+        const prestador = nombreCompleto?.value || 'Sociedad Mexicana de Anestesiología';
         
         const deudor = pagare.deudor;
-        const monto = formatearDinero(pagare.monto_solicitado);
-        const vencimiento = formatearFechaFormatoLargo(pagare.fecha_vencimiento);
-        const interes = pagare.interes_moratorio || "0";
-        const folio = pagare.folio || `PAG-${pagare.id || Date.now().toString().slice(-4)}`;
-        const hoy = new Date().toLocaleDateString("es-MX", { year: 'numeric', month: 'long', day: 'numeric' });
+        const montoCapital = parseFloat(pagare.monto_solicitado);
+        const interes = parseFloat(pagare.interes_moratorio || 0);
 
-        doc.setDrawColor(245, 158, 11);
-        doc.setLineWidth(2);
-        doc.rect(10, 10, 277, 190); 
+        const totalPagar = montoCapital + (montoCapital * (interes / 100));
+
+        const strCapital = formatearDinero(montoCapital);
+        const strTotal = formatearDinero(totalPagar);
+
+        const partesFecha = pagare.fecha_vencimiento.split('-');
+        const fVenc = new Date(partesFecha[0], partesFecha[1] - 1, partesFecha[2]);
+        const diaVenc = fVenc.getDate();
+        const mesVenc = fVenc.toLocaleString('es-MX', { month: 'long' });
+        const anioVenc = fVenc.getFullYear();
+
+        const hoy = new Date();
+        const hoyFmt = `${hoy.getDate()} de ${hoy.toLocaleString('es-MX', { month: 'long' })} de ${hoy.getFullYear()}`;
+
+        // 1. TÍTULO Y FOLIO
         doc.setFont("helvetica", "bold");
-        doc.text("Vencimiento:", 18, 27);
-        doc.setFont("helvetica", "normal");
-        doc.text(vencimiento, 50, 27);
-        doc.rect(100, 15, 80, 20);
-        doc.setFont("helvetica", "bold");
-        doc.text("Capital $", 103, 27);
-        doc.setFont("helvetica", "normal");
-        doc.text(monto, 125, 27);
-        doc.rect(185, 15, 100, 20);
-        doc.text(`Interés: ${interes}%`, 188, 27);
-        
-        doc.setFontSize(14);
-        doc.text(`Por este PAGARÉ, yo ${deudor} prometo pagar a ${prestador}`, 15, 55);
-        doc.rect(15, 90, 270, 40);
-        doc.text(`La cantidad de $ ${monto} el día ${vencimiento}. Interés: ${interes}% mensual.`, 18, 105);
-        doc.text(`Ciudad de México, a ${hoy}`, 150, 145);
-        doc.rect(80, 155, 130, 40);
-        doc.text("Firma del prestatario", 85, 190);
-        
-        if (pagare.firma) {
-            doc.addImage(pagare.firma, 'PNG', 110, 140, 80, 45);
+        doc.setFontSize(20);
+        doc.text("Pagaré", 148.5, 25, { align: "center" });
+
+        // Evaluamos si el folio existe y no es un string vacío
+        if (pagare.folio && pagare.folio.trim() !== '') {
+            doc.setFontSize(12);
+            // Alineado a la derecha, en la esquina superior
+            doc.text(`Folio: ${pagare.folio.toUpperCase()}`, 275, 25, { align: "right" });
         }
 
-        doc.save(`Pagare_${folio}_${deudor.replace(/\s+/g, '_')}.pdf`);
+        // 2. CABECERA ALINEADA A LA IZQUIERDA
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Vencimiento: ${diaVenc} de ${mesVenc} de ${anioVenc}`, 25, 45);
+        doc.text(`Capital: $${strCapital} MXN`, 125, 45);
+        doc.text(`Interés: ${interes}%`, 215, 45);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(15);
+        doc.text(`Total, a pagar: $${strTotal} MXN`, 25, 58);
+
+        // 3. PÁRRAFO PRINCIPAL
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(14); 
+        
+        const textoLegal = `Por este PAGARÉ, yo ${deudor} prometo incondicionalmente pagar a ${prestador} la cantidad de: $${strTotal} MXN el día: ${diaVenc} del mes de ${mesVenc} del año ${anioVenc}. La suma que ampara este título causará el interés a razón de ${interes}% mensual en el caso de demora.`;
+        
+        const lineasCuerpo = doc.splitTextToSize(textoLegal, 245);
+        doc.text(lineasCuerpo, 25, 80, { lineHeightFactor: 1.8 });
+
+        // 4. LUGAR Y FECHA
+        doc.setFontSize(15);
+        doc.text(`Lugar y fecha: Ciudad de México a ${hoyFmt}`, 148.5, 130, { align: "center" });
+
+        // 5. FIRMA Y LÍNEA
+        if (pagare.firma) {
+            doc.addImage(pagare.firma, 'PNG', 118.5, 135, 60, 35);
+        }
+        
+        doc.setDrawColor(0, 0, 0); 
+        doc.setLineWidth(0.5);
+        doc.line(95, 172, 202, 172); 
+        
+        doc.setFontSize(15);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Nombre y firma del prestatario: ${deudor}`, 148.5, 182, { align: "center" });
+
+        // DESCARGAR (Usamos un fallback solo para el nombre del archivo si no hay folio)
+        const nombreArchivoFolio = pagare.folio ? pagare.folio.replace(/\s+/g, '') : `PAG-${pagare.id || Date.now().toString().slice(-4)}`;
+        doc.save(`Pagare_${nombreArchivoFolio}_${deudor.replace(/\s+/g, '_')}.pdf`);
     };
 
     return { 
+        fechaHoy,
         pagares, 
         pagaresAlCorriente, 
         pagaresAtrasados,   
         totalProtegido,     
         modalPagare, formPagare, canvasFirma,
         cargarPagares, abrirCrear, empezarDibujo, dibujar, terminarDibujo, limpiarFirma, guardarNuevoPagare,
-        descargarPDF, formatearDinero, formatearFechaFormatoLargo
+        descargarPDF, formatearDinero, 
+        formatearFechaFormatoLargo, cambiarEstadoPagare
     };
 }

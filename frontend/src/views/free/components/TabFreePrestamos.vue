@@ -102,7 +102,7 @@
                             </div>
                             <div>
                                 <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha Límite</label>
-                                <input v-model="formPrestamo.fecha_pago" type="date" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
+                                <input v-model="formPrestamo.fecha_pago" type="date" :min="fechaHoy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                             </div>
                         </div>
                     </div>
@@ -124,16 +124,18 @@ import { ref, computed, onMounted, onActivated } from 'vue';
 import { Plus, ArrowDownLeft, ArrowUpRight, X, Check, Clock, CheckCircle2 } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
 import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
+import { obtenerHoy } from '../../../utils/date.js';
 
 const props = defineProps({ prestamos: Array, isPremium: Boolean});
 const emit = defineEmits(['crearPrestamo', 'saldarPrestamo']);
+
+const fechaHoy = obtenerHoy();
 
 const columnas = [
     { key: 'tipo', label: 'Tipo' }, { key: 'deudor', label: 'Persona' }, { key: 'concepto', label: 'Concepto' },
     { key: 'monto', label: 'Monto' }, { key: 'estado', label: 'Estado' }, { key: 'fechaPago', label: 'Límite' }
 ];
 
-// ──  HELPER DEL FORMATO FINANCIERO ──────────────────────────────
 const formatearDinero = (monto) => {
     return Number(monto).toLocaleString('en-US', {
         minimumFractionDigits: 2,
@@ -188,6 +190,12 @@ const guardarNuevoPrestamo = () => {
     if (!tipo || !deudor || !concepto || !monto) {
         return Swal.fire({ title: 'Campos incompletos', text: 'Tipo, persona, concepto y monto son requeridos.', icon: 'warning', confirmButtonColor: '#00B4B4' });
     }
+
+    // 3. CANDADO DEL FRONTEND
+    if (fecha_pago && fecha_pago < fechaHoy) {
+        return Swal.fire({ title: 'Fecha inválida', text: 'La fecha límite no puede estar en el pasado.', icon: 'warning', confirmButtonColor: '#00B4B4' });
+    }
+
     emit('crearPrestamo', formPrestamo.value);
     modalPrestamo.value = false;
 };

@@ -80,7 +80,6 @@
 
         </div>
 
-        <!-- Reutilizamos la súper tabla -->
         <BaseDataTable titulo="Historial Completo" placeholderBuscar="Buscar descripción o categoría..."
             :headers="columnas" :items="movimientos" :searchFields="['descripcion', 'categoria']">
             <template #tipo="{ row }">
@@ -160,7 +159,8 @@
                             </div>
                             <div>
                                 <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha *</label>
-                                <input v-model="formMovimiento.fecha" type="date"
+                                <!-- CALENDARIO BLOQUEADO AL HOY COMO MÁXIMO -->
+                                <input v-model="formMovimiento.fecha" type="date" :max="fechaHoy"
                                     class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                             </div>
                         </div>
@@ -185,117 +185,70 @@ import { ref, computed, watch, onMounted, onActivated } from 'vue';
 import { Plus, ArrowDownLeft, ArrowUpRight, X, Check, TrendingDown, Flame, TrendingUp, AlertTriangle, Scale } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
 import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
+import { obtenerHoy } from '../../../utils/date.js';
 
 const props = defineProps({ 
     movimientos: Array,
     totalIngresos: Number,
     totalGastos: Number,
-	isPremium: Boolean
+    isPremium: Boolean
 });
 const emit = defineEmits(['crearMovimiento']);
+
+const fechaHoy = obtenerHoy();
 
 const columnas = [
     { key: 'tipo', label: 'Tipo' }, { key: 'categoria', label: 'Categoría' },
     { key: 'descripcion', label: 'Descripción' }, { key: 'monto', label: 'Monto' }, { key: 'fecha', label: 'Fecha' }
 ];
 
-// ── HELPER PARA OBLIGAR AL FORMATO (1,000.00) ─────────────────
 const formatearDinero = (monto) => {
     return Number(monto).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        minimumFractionDigits: 2, maximumFractionDigits: 2
     });
 };
 
-// ── COMPUTED 1: LÓGICA DEL TOP 3 CATEGORÍAS ───────────────────────
 const topCategorias = computed(() => {
     if (!props.movimientos || props.movimientos.length === 0) return [];
-    
     const acumulador = {};
-    props.movimientos
-        .filter(m => m.tipo === 'gasto')
-        .forEach(m => {
-            acumulador[m.categoria] = (acumulador[m.categoria] || 0) + Number(m.monto);
-        });
-        
-    return Object.entries(acumulador)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3);
+    props.movimientos.filter(m => m.tipo === 'gasto').forEach(m => {
+        acumulador[m.categoria] = (acumulador[m.categoria] || 0) + Number(m.monto);
+    });
+    return Object.entries(acumulador).sort((a, b) => b[1] - a[1]).slice(0, 3);
 });
 
-// ── COMPUTED 2: LÓGICA DEL GASTO MÁS PICANTE ──────────────────────
 const gastoMasFuerte = computed(() => {
     if (!props.movimientos || props.movimientos.length === 0) return null;
-    
     const gastos = props.movimientos.filter(m => m.tipo === 'gasto');
     if (gastos.length === 0) return null;
-    
     return gastos.reduce((max, m) => Number(m.monto) > Number(max.monto) ? m : max, gastos[0]);
 });
 
-// ── COMPUTED 3: EL BALANCE DE VIDA CAMALEÓNICO ────────────────────
 const balanceStatus = computed(() => {
     const ingresos = props.totalIngresos || 0;
     const gastos = props.totalGastos || 0;
 
     if (ingresos > gastos) {
-        return {
-            estado: 'superavit',
-            titulo: 'Vas en verde',
-            mensaje: 'Ganás más de lo que gastás',
-            diferencia: ingresos - gastos,
-            colorBorder: 'border-emerald-100',
-            colorBg: 'bg-emerald-50',
-            colorIcon: 'text-emerald-500',
-            colorTextMonto: 'text-emerald-600'
-        };
+        return { estado: 'superavit', titulo: 'Vas en verde', mensaje: 'Ganás más de lo que gastás', diferencia: ingresos - gastos, colorBorder: 'border-emerald-100', colorBg: 'bg-emerald-50', colorIcon: 'text-emerald-500', colorTextMonto: 'text-emerald-600' };
     } else if (gastos > ingresos) {
-        return {
-            estado: 'deficit',
-            titulo: 'Números Rojos',
-            mensaje: 'Gastás más de lo que ganás',
-            diferencia: gastos - ingresos,
-            colorBorder: 'border-red-100',
-            colorBg: 'bg-red-50',
-            colorIcon: 'text-red-500',
-            colorTextMonto: 'text-red-600'
-        };
+        return { estado: 'deficit', titulo: 'Números Rojos', mensaje: 'Gastás más de lo que ganás', diferencia: gastos - ingresos, colorBorder: 'border-red-100', colorBg: 'bg-red-50', colorIcon: 'text-red-500', colorTextMonto: 'text-red-600' };
     } else {
-        return {
-            estado: 'empate',
-            titulo: 'Tablas',
-            mensaje: 'Ingresos y gastos iguales',
-            diferencia: 0,
-            colorBorder: 'border-blue-100',
-            colorBg: 'bg-blue-50',
-            colorIcon: 'text-blue-500',
-            colorTextMonto: 'text-blue-600'
-        };
+        return { estado: 'empate', titulo: 'Tablas', mensaje: 'Ingresos y gastos iguales', diferencia: 0, colorBorder: 'border-blue-100', colorBg: 'bg-blue-50', colorIcon: 'text-blue-500', colorTextMonto: 'text-blue-600' };
     }
 });
 
-// ── Helpers ───────────────────────────────────────────────────────
-const hoy = () => {
-    const date = new Date();
-    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-    return date.toISOString().split('T')[0];
-};
-
-// ── Lógica del Modal Interno ──────────────────────────────────────
 const modalMovimiento = ref(false);
-const formMovimiento = ref({ tipo: 'gasto', categoria: '', descripcion: '', monto: '', fecha: hoy() });
+const formMovimiento = ref({ tipo: 'gasto', categoria: '', descripcion: '', monto: '', fecha: fechaHoy });
 
 const categoriasIngreso = ['Sueldo', 'Ventas', 'Freelance', 'Inversiones', 'Otro'];
 const categoriasGasto = ['Alimentación', 'Transporte', 'Servicios', 'Entretenimiento', 'Salud', 'Educación', 'Otro'];
 
-const categoriasActuales = computed(() =>
-    formMovimiento.value.tipo === 'ingreso' ? categoriasIngreso : categoriasGasto
-);
+const categoriasActuales = computed(() => formMovimiento.value.tipo === 'ingreso' ? categoriasIngreso : categoriasGasto );
 
 watch(() => formMovimiento.value.tipo, () => { formMovimiento.value.categoria = ''; });
 
 const abrirCrear = () => {
-    formMovimiento.value = { tipo: 'gasto', categoria: '', descripcion: '', monto: '', fecha: hoy() };
+    formMovimiento.value = { tipo: 'gasto', categoria: '', descripcion: '', monto: '', fecha: fechaHoy };
     modalMovimiento.value = true;
 };
 
@@ -305,11 +258,15 @@ const guardarNuevaMovimiento = () => {
         return Swal.fire({ title: 'Campos incompletos', text: 'Completa todos los campos antes de guardar.', icon: 'warning', confirmButtonColor: '#00B4B4' });
     }
 
+    // 3. SEGUNDO CANDADO EN EL FRONTEND
+    if (fecha > fechaHoy) {
+        return Swal.fire({ title: '¡No se puede!', text: 'La fecha no puede ser posterior a hoy.', icon: 'warning', confirmButtonColor: '#00B4B4' });
+    }
+
     emit('crearMovimiento', formMovimiento.value);
     modalMovimiento.value = false;
 };
 
-// ── EL DETECTOR DEL ACCESO RÁPIDO ────────────────────────────────
 const verificarAccesoRapido = () => {
     if (localStorage.getItem('abrir_modal_movimiento') === 'true') {
         localStorage.removeItem('abrir_modal_movimiento'); 
@@ -320,9 +277,3 @@ const verificarAccesoRapido = () => {
 onMounted(verificarAccesoRapido);
 onActivated(verificarAccesoRapido);
 </script>
-
-<style scoped>
-.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
-.modal-enter-from > div, .modal-leave-to > div { transform: scale(0.96) translateY(8px); transition: transform 0.2s ease; }
-</style>

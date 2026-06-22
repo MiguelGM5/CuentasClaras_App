@@ -147,6 +147,14 @@ const Finance = {
             ]
         );
         return result.insertId;
+    },
+    updateEstadoPagare: async (id, usuarioId, estado) => {
+        await db.execute(
+            `UPDATE test.pagares 
+             SET estado = ?
+             WHERE id = ? AND usuario_id = ?`,
+            [estado, id, usuarioId]
+        );
     }
 };
 

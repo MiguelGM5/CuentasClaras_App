@@ -150,7 +150,7 @@ const financeController = {
                 folio, deudor, monto_solicitado, fecha_vencimiento, interes_moratorio, firma 
             });
 
-            // ✅ ÉXITO CON SWEETALERT PAYLOAD INCLUIDO
+            // ÉXITO CON SWEETALERT PAYLOAD INCLUIDO
             res.status(201).json({
                 title: '¡Pagaré Generado!',
                 text: 'El documento fue generado con éxito.',
@@ -174,6 +174,18 @@ const financeController = {
                 text: 'Hubo un problema al emitir el pagaré legal.',
                 icon: 'error' 
             });
+        }
+    }, 
+    updateEstadoPagare: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { estado } = req.body; 
+            await Finance.updateEstadoPagare(id, req.usuario.id, estado);
+
+            res.status(200).json({ title: 'Actualizado', text: 'Estado modificado.', icon: 'success' });
+        } catch (err) {
+            console.error('Error al cambiar estado:', err);
+            res.status(500).json({ title: 'Error', text: 'Falló la base de datos.', icon: 'error' });
         }
     }
 };

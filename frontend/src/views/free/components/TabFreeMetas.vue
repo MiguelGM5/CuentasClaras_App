@@ -90,7 +90,7 @@
                         </div>
                         <div>
                             <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha Límite</label>
-                            <input v-model="formCrear.fecha_limite" type="date" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
+                            <input v-model="formCrear.fecha_limite" type="date" :min="fechaHoy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                         </div>
                     </div>
 
@@ -127,7 +127,7 @@
                             </div>
                             <div>
                                 <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha Límite</label>
-                                <input v-model="formEditar.fecha_limite" type="date" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-colors" />
+                                <input v-model="formEditar.fecha_limite" type="date" :min="fechaHoy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-colors" />
                             </div>
                         </div>
                     </div>
@@ -187,10 +187,13 @@
 <script setup>
 import { ref, watch, onMounted, onActivated } from 'vue';
 import { Plus, Trash2, Edit2, Target, Calendar, DollarSign, X, Check } from 'lucide-vue-next';
+import { obtenerHoy } from '../../../utils/date';
 import Swal from 'sweetalert2';
 
 const props = defineProps({ metas: { type: Array, required: true } });
 const emit = defineEmits(['crearMeta', 'abonarMeta', 'editarMeta', 'eliminarMeta']);
+
+const fechaHoy = obtenerHoy();
 
 // ──  HELPER DEL FORMATO FINANCIERO ──────────────────────────────
 const formatearDinero = (monto) => {
@@ -282,6 +285,10 @@ const guardarNuevaMeta = () => {
     if (!formCrear.value.titulo || !formCrear.value.monto_objetivo) {
         return Swal.fire({ icon: 'error', title: 'Campos vacíos', text: 'El nombre y el objetivo son obligatorios.'});
     }
+    // 3. VALIDACIÓN FRONTEND
+    if (formCrear.value.fecha_limite && formCrear.value.fecha_limite < fechaHoy) {
+        return Swal.fire({ icon: 'warning', title: 'Fecha inválida', text: 'No puedes poner un límite en el pasado.' });
+    }
     emit('crearMeta', formCrear.value);
     modalCrear.value = false;
 };
@@ -303,6 +310,10 @@ const abrirEditar = (meta) => {
 const guardarEdicion = () => {
     if (!formEditar.value.titulo || !formEditar.value.monto_objetivo) {
         return Swal.fire({ icon: 'error', title: 'Campos vacíos', text: 'El nombre y el objetivo son obligatorios.'});
+    }
+    //4. VALIDACIÓN FRONTEND
+    if (formEditar.value.fecha_limite && formEditar.value.fecha_limite < fechaHoy) {
+        return Swal.fire({ icon: 'warning', title: 'Fecha inválida', text: 'No puedes poner un límite en el pasado.' });
     }
     emit('editarMeta', formEditar.value);
     modalEditar.value = false;

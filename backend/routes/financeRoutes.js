@@ -24,5 +24,6 @@ router.delete('/metas/:id',           finance.deleteMeta);
 // Pagarés (el frontend solo los llama si el usuario es premium)
 router.get ('/pagares',               finance.getPagares);
 router.post('/pagares',               finance.createPagare);
+router.put('/pagares/:id/estado', finance.updateEstadoPagare);
 
 module.exports = router;

@@ -52,6 +52,20 @@ const loginController = {
                 icon: 'error'
             });
         }
+    },
+    renovarToken: async (req, res) => {
+        try {
+            // Como pasa por tu middleware verificarToken, req.usuario ya existe y es válido
+            const renewedToken = jwt.sign(
+                { id: req.usuario.id, email: req.usuario.email },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' } // Le damos 1 horita más de vida
+            );
+
+            res.status(200).json({ token: renewedToken });
+        } catch (error) {
+            res.status(500).json({ message: 'Error al renovar sesión' });
+        }
     }
 }
 module.exports = loginController;

@@ -75,9 +75,27 @@
             </template>
             
             <template #acciones="{ row }">
-                <button @click="descargarPDF(row)" title="Descargar PDF Legal" class="p-1.5 bg-slate-50 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded-lg transition-colors border border-slate-100 hover:border-amber-200 shadow-sm">
-                    <Download :size="15" />
-                </button>
+                <div class="flex items-center gap-1.5">
+                    <button @click="descargarPDF(row)" title="Descargar PDF Legal" class="p-1.5 bg-slate-50 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded-lg transition-colors border border-slate-100 hover:border-amber-200 shadow-sm">
+                        <Download :size="15" />
+                    </button>
+                    
+                    <button 
+                        v-if="row.estado?.toLowerCase() !== 'liquidado' && row.estado?.toLowerCase() !== 'atrasado'" 
+                        @click="cambiarEstadoPagare(row.id, 'Atrasado')" 
+                        title="Marcar como Atrasado" 
+                        class="p-1.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors border border-slate-100 hover:border-red-200 shadow-sm">
+                        <AlertCircle :size="15" />
+                    </button>
+
+                    <button 
+                        v-if="row.estado?.toLowerCase() !== 'liquidado'" 
+                        @click="cambiarEstadoPagare(row.id, 'liquidado')" 
+                        title="Liquidar Pagaré" 
+                        class="p-1.5 bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-500 rounded-lg transition-colors border border-slate-100 hover:border-emerald-200 shadow-sm">
+                        <CheckCircle2 :size="15" />
+                    </button>
+                </div>
             </template>
         </BaseDataTable>
 
@@ -117,7 +135,7 @@
                             
                             <div>
                                 <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha de Vencimiento *</label>
-                                <input v-model="formPagare.fecha_vencimiento" type="date"
+                                <input v-model="formPagare.fecha_vencimiento" type="date" :min="fechaHoy"
                                     class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white transition-colors" />
                             </div>
                             
@@ -200,9 +218,9 @@ const columnas = [
 
 // Inicializamos todo el motor lógico y destructuramos las variables para el HTML
 const { 
-    modalPagare, formPagare, canvasFirma, pagaresAlCorriente, pagaresAtrasados, totalProtegido, 
+    fechaHoy, modalPagare, formPagare, canvasFirma, pagaresAlCorriente, pagaresAtrasados, totalProtegido, 
     abrirCrear, empezarDibujo, dibujar, terminarDibujo, limpiarFirma, guardarNuevoPagare,
-    descargarPDF, formatearDinero, formatearFechaFormatoLargo       
-} = usePagares(emit);
+    descargarPDF, formatearDinero, formatearFechaFormatoLargo, cambiarEstadoPagare       
+} = usePagares(props, emit);
 
 </script>

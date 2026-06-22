@@ -1,8 +1,10 @@
 import { ref, computed } from 'vue';
 import Swal from 'sweetalert2';
 import { API_URL } from '../../constants/api';
+import { obtenerHoy } from '../../utils/date';
 
 export function useMovimientos() {
+    const fechaHoy = obtenerHoy();
     const movimientos = ref([]);
     
     const getHeaders = () => ({
@@ -31,6 +33,12 @@ export function useMovimientos() {
     };
 
     const registrarMovimiento = async (datos) => {
+        // 🔥 2. VALIDACIÓN DEL TIEMPO (DEL HOY PARA ATRÁS)
+        if (datos.fecha && datos.fecha > fechaHoy) {
+            Swal.fire({ title: '¡Epá!', text: 'No puedes registrar movimientos con fecha del futuro.', icon: 'warning', confirmButtonColor: '#00B4B4' });
+            return false;
+        }
+
         try {
             const res = await fetch(`${API_URL}/api/finance/movimientos`, {
                 method: 'POST', headers: getHeaders(), body: JSON.stringify(datos)
@@ -49,6 +57,6 @@ export function useMovimientos() {
 
     return { 
         movimientos, totalIngresos, totalGastos, saldoActual, gastosPorCategoria, 
-        cargarMovimientos, registrarMovimiento 
+        cargarMovimientos, registrarMovimiento, fechaHoy
     };
 }

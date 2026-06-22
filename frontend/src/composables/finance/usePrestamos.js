@@ -1,8 +1,10 @@
 import { ref, computed } from 'vue';
 import Swal from 'sweetalert2';
 import { API_URL } from '../../constants/api';
+import { obtenerHoy } from '../../utils/date';
 
 export function usePrestamos() {
+    const fechaHoy = obtenerHoy();
     const prestamos = ref([]);
     
     const getHeaders = () => ({
@@ -22,6 +24,12 @@ export function usePrestamos() {
     };
 
     const registrarPrestamo = async (datos) => {
+        // 2. EL CANDADO DEL BACKEND
+        if (datos.fecha_pago && datos.fecha_pago < fechaHoy) {
+            Swal.fire({ title: 'Fecha inválida', text: 'La fecha límite de pago debe ser a futuro.', icon: 'warning', confirmButtonColor: '#00B4B4' });
+            return false;
+        }
+
         try {
             const res = await fetch(`${API_URL}/api/finance/prestamos`, {
                 method: 'POST', headers: getHeaders(), body: JSON.stringify(datos)
@@ -57,6 +65,6 @@ export function usePrestamos() {
 
     return { 
         prestamos, totalPrestado, totalDeuda, 
-        cargarPrestamos, registrarPrestamo, saldarPrestamo 
+        cargarPrestamos, registrarPrestamo, saldarPrestamo, fechaHoy 
     };
 }

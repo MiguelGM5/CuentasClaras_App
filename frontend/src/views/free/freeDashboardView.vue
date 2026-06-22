@@ -113,7 +113,7 @@ onMounted(() => {
             showConfirmButton: false, timer: 2500, timerProgressBar: true,
             didOpen: t => { t.onmouseenter = Swal.stopTimer; t.onmouseleave = Swal.resumeTimer; }
         });
-        toast.fire({ icon: 'success', title: `Bienvenido, ${datosSidebar.nombre}` });
+        toast.fire({ icon: 'success', title: `Bienvenido, ${datosSidebar.value.nombre}` });
         sessionStorage.removeItem('recentLogin');
     }
 

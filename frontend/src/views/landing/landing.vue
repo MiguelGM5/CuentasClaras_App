@@ -108,7 +108,7 @@ const planesConfig = [
             <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
                 <!-- Logo -->
                 <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 bg-[#00B4B4] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                     <img 
                         src="../../assets/LogoRecortado.png" 
                         alt="Icono Nivel Pro" 

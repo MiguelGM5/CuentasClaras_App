@@ -24,35 +24,48 @@
     const mostrarConfirmPassword = ref(false);
 
 </script>
-<template>
-    <div class="min-h-screen flex items-center justify-center bg-white p-4 font-sans">
-        
-        <div class="flex w-full max-w-6xl bg-white overflow-hidden">
-            
-            <div class="hidden lg:flex w-1/2 flex-col justify-center items-center p-12 bg-[#F9FAFF]">
-                <div class="self-start mb-8 flex items-center gap-2">
-                    <div class="bg-[#009291] p-1 rounded-lg">
-                        <div class="w-5 h-5 bg-white rounded-sm"></div>
-                    </div>
-                    <span class="font-bold text-2xl text-[#001D3D]">Cuentas Claras</span>
-                </div>
-                <img 
-                    src="https://img.freepik.com/free-vector/digital-lifestyle-concept-illustration_114360-7327.jpg" 
-                    alt="Cuentas Claras Illustration" 
-                    class="w-full max-w-md" 
-                />
-            </div>
 
-            <div class="w-full lg:w-1/2 p-8 lg:p-16 flex flex-col justify-center">
+<template>
+    <!-- Contenedor absoluto de pantalla completa -->
+    <div class="min-h-screen w-full flex bg-white font-sans">
+        
+        <!-- MITAD IZQUIERDA: Imagen full-bleed nativa de Vite -->
+        <div class="hidden lg:block lg:w-1/2 relative overflow-hidden">
+            <!-- Ponele el nombre de tu foto de registro acá -->
+            <img 
+                src="../../assets/Fondo2.jpg" 
+                alt="Fondo registro" 
+                class="absolute inset-0 w-full h-full object-cover object-center"
+                loading="lazy"
+            />
+            <!-- Filtro oscuro -->
+            <div class="absolute inset-0 bg-black/20"></div>
+        </div>
+
+        <!-- MITAD DERECHA: Formulario con scroll interno protegido -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16 overflow-y-auto">
+            
+            <div class="w-full max-w-md py-8 my-auto">
+                
+                <!-- Logo coronando el formulario -->
+                <div class="mb-mb-8 sm:mb-10">
+                    <img src="../../assets/LogoCC.png" 
+                        alt="Logo Cuentas Claras" 
+                        loading="lazy" 
+                        class="h-20 sm:h-24 md:h-28 w-auto object-contain transition-all duration-300"
+                    >
+                </div>
+
                 <h1 class="text-4xl font-bold text-gray-900 mb-2">Crear cuenta</h1>
                 <p class="text-gray-500 mb-1 text-lg">Unete para gestionar tus finanzas</p>
                 <p class="mb-8 text-sm">
                     ¿Ya tienes una cuenta? 
-                    <RouterLink to="/" class="text-[#00B4B4] font-semibold hover:underline cursor-pointer">
+                    <RouterLink to="/login" class="text-[#00B4B4] font-semibold hover:underline cursor-pointer">
                         ¡Inicia sesión aquí!
                     </RouterLink>
                 </p>
 
+                <!-- TU FORMULARIO 100% INTACTO -->
                 <form class="space-y-5" @submit.prevent="manejadorRegistro">
                     
                     <div class="border-b-2 border-gray-100 py-1 focus-within:border-[#00B4B4] transition-colors">
@@ -165,5 +178,6 @@
             </div>
             
         </div>
+
     </div>
 </template>

@@ -81,7 +81,7 @@ export function useRegister(){
                 confirmButtonText: datos.confirmButtonText,
                 allowOutsideClick: datos.allowOutsideClick
             });
-            if(resp.isConfirmed) router.push('/');
+            if(resp.isConfirmed) router.push('/login');
 
         } catch (error) {
             console.error("error:", error);

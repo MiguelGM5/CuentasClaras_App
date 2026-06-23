@@ -19,8 +19,12 @@
     <aside class="w-60 bg-white border-r border-slate-100 flex flex-col fixed h-full z-20 shadow-sm">
         <div class="px-5 py-5 border-b border-slate-100">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-[#00B4B4] rounded-xl flex items-center justify-center shadow-md shadow-teal-100 flex-shrink-0">
-                    <div class="w-4 h-4 bg-white rounded-sm"></div>
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <img 
+                        src="../../assets/LogoRecortado.png" 
+                        alt="Icono Nivel Pro" 
+                        class="h-10 w-auto object-contain"
+                    />
                 </div>
                 <div>
                     <p class="font-black text-[#001D3D] leading-tight text-xl">Cuentas Claras</p>

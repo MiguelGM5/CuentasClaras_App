@@ -2,13 +2,13 @@
   "name": "sistema_infempresarial",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev:backend": "nodemon backend/server.js",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev": "concurrently -c \"cyan,red\" \"npm run dev:backend\" \"npm run dev:frontend\""
+    "dev": "nodemon server.js"
   },
   "repository": {
     "type": "git",

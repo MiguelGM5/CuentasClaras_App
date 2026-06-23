@@ -1,15 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuth } from '../composables/auth/useAuth.js';
+import Landing from '../views/landing/landing.vue';
 
 const LoginView = () => import('../views/auth/Login.vue');
 const RegisterView = () => import('../views/auth/RegisterView.vue');
 const AdminDashboardView = ()=> import('../views/admin/adminDashboardView.vue');
 const FreeDashboardView = ()=> import('../views/free/freeDashboardView.vue');
 const PerfilView = () => import('../views/perfil/perfilView.vue');
+const LandingPage = () => import('../views/landing/landing.vue');
 
 const routes = [
 	{
 		path: '/',
+		name: 'Landing',
+		component: LandingPage
+	},
+	{
+		path: '/login',
 		name: 'Login',
 		component: LoginView
 	},

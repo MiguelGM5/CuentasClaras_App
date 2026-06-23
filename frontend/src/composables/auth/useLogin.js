@@ -65,7 +65,6 @@ export function useLogin() {
             }
 
         } catch (error) {
-            console.error("Error en login:", error);
             Swal.fire({
                 title: 'Error de conexión',
                 text: 'Hubo un problema al conectar con el servidor.',

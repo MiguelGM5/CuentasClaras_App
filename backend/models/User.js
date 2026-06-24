@@ -35,34 +35,35 @@ const User = {
         return result.insertId;
     },
 
-    // ── 🔥 NUEVO: GUARDAR CAMBIOS DE PERFIL ────────────────────────
-    updateProfile: async (id, profileData) => {
-        // Mapeamos el camelCase del front al snake_case de la base de datos
-        const { nombre, apellidoPaterno, apellidoMaterno, telefono, fechaNacimiento } = profileData;
-        const query = `
-            UPDATE test.usuarios 
-            SET nombre = ?, 
-                apellido_paterno = ?, 
-                apellido_materno = ?, 
-                telefono = ?, 
-                fecha_nacimiento = ?
-            WHERE id = ?
-        `;
-        const [result] = await db.execute(query, [
-            nombre, 
-            apellidoPaterno || null, 
-            apellidoMaterno || null, 
-            telefono || null, 
-            fechaNacimiento || null, 
-            id
-        ]);
-        return result.affectedRows > 0;
-    },
-
-    // ── 🔥 NUEVO: ACTUALIZAR CONTRASEÑA ────────────────────────────
+    // ── ACTUALIZAR CONTRASEÑA ────────────────────────────
     updatePassword: async (id, newHashedPassword) => {
         const query = 'UPDATE test.usuarios SET password = ? WHERE id = ?';
         const [result] = await db.execute(query, [newHashedPassword, id]);
+        return result.affectedRows > 0;
+    },
+
+    // ── NUEVO: INTEGRACIÓN CON STRIPE (WEBHOOKS) ────────────────
+    
+    actualizarSuscripcionPro: async (userId, customerId, subscriptionId) => {
+        const query = `
+            UPDATE test.usuarios 
+            SET rol_Id = 3, 
+                stripe_customer_id = ?, 
+                stripe_subscription_id = ? 
+            WHERE id = ?
+        `;
+        const [result] = await db.execute(query, [customerId, subscriptionId, userId]);
+        return result.affectedRows > 0;
+    },
+
+    cancelarSuscripcionPro: async (subscriptionId) => {
+        const query = `
+            UPDATE test.usuarios 
+            SET rol_Id = 2, 
+                stripe_subscription_id = NULL 
+            WHERE stripe_subscription_id = ?
+        `;
+        const [result] = await db.execute(query, [subscriptionId]);
         return result.affectedRows > 0;
     }
 };

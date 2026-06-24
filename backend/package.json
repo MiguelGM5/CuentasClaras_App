@@ -30,6 +30,7 @@
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
     "mysql2": "^3.22.3",
+    "stripe": "^22.2.3",
     "sweetalert2": "^11.26.24"
   },
   "devDependencies": {

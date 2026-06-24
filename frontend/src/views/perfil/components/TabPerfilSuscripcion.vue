@@ -4,6 +4,7 @@ import {
     Sparkles, CheckCircle, ArrowUpRight, XCircle,
     Receipt, Calendar, CreditCard, Zap, Shield
 } from 'lucide-vue-next';
+import { API_URL } from '../../../constants/api';
 
 const props = defineProps({
     perfil:         { type: Object, required: true },
@@ -14,10 +15,67 @@ const props = defineProps({
 const emit = defineEmits(['actualizar', 'cancelar']);
 
 const confirmarCancelacion = ref(false);
+const cargandoPago = ref(false); // Para deshabilitar el botón mientras carga
 
 const handleCancelar = () => {
     emit('cancelar');
     confirmarCancelacion.value = false;
+};
+
+// ──NUEVA FUNCIÓN CON FETCH NATIVO ────────────────────────
+const irAPagar = async () => {
+    cargandoPago.value = true;
+    try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            alert('Tu sesión expiró. Volvé a iniciar sesión.');
+            return;
+        }
+
+        //TRUCO DE SENIOR: Desestructuramos el JWT nativamente para sacar el ID
+        // Un JWT se compone de: Header.Payload.Signature. Agarramos el Payload (posición 1)
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payloadDecodificado = JSON.parse(window.atob(base64));
+        
+        // Buscamos el ID dentro del token descifrado
+        // NOTA: Si en tu backend guardaste el ID en el token como 'id_usuario' o 'userId', cambialo acá abajo:
+        const userIdDesdeToken = payloadDecodificado.id || payloadDecodificado.userId || payloadDecodificado.id_usuario;
+
+        console.log("ID recuperado del JWT con éxito:", userIdDesdeToken);
+
+        if (!userIdDesdeToken) {
+            alert('No se pudo validar el ID de usuario desde la sesión. Volvé a iniciar sesión.');
+            return;
+        }
+
+        const response = await fetch(`${API_URL}/api/pagos/crear-checkout`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+                userId: userIdDesdeToken // Mandamos el ID real y verificado
+            }) 
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al contactar al servidor');
+        }
+
+        const data = await response.json();
+
+        if (data.url) {
+            window.location.href = data.url;
+        }
+    } catch (error) {
+        console.error('Error de pago:', error);
+        alert('Hubo un problema al conectar con la pasarela de pago.');
+    } finally {
+        cargandoPago.value = false;
+    }
 };
 </script>
 
@@ -104,10 +162,13 @@ const handleCancelar = () => {
                 <!-- Botones de accion segun plan -->
                 <div class="mt-5 flex flex-wrap gap-3">
                     <button v-if="!esPremium"
-                        @click="$emit('actualizar', 'premium')"
-                        class="flex items-center gap-2 bg-[#00B4B4] hover:bg-[#009291] text-white font-black px-5 py-2.5 rounded-xl text-sm shadow-md shadow-teal-100 transition-all"
+                        @click="irAPagar"
+                        :disabled="cargandoPago"
+                        :class="cargandoPago ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#009291]'"
+                        class="flex items-center gap-2 bg-[#00B4B4] text-white font-black px-5 py-2.5 rounded-xl text-sm shadow-md shadow-teal-100 transition-all"
                     >
-                        <Zap :size="14" /> Actualizar a Premium
+                        <Zap :size="14" /> 
+                        {{ cargandoPago ? 'Conectando...' : 'Actualizar a Premium' }}
                     </button>
 
                     <button v-if="esPremium"

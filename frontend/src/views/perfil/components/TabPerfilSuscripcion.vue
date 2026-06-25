@@ -1,28 +1,124 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
     Sparkles, CheckCircle, ArrowUpRight, XCircle,
-    Receipt, Calendar, CreditCard, Zap, Shield
+    Receipt, Calendar, CreditCard, Zap, Shield, Loader2 
 } from 'lucide-vue-next';
 import { API_URL } from '../../../constants/api';
 
 const props = defineProps({
     perfil:         { type: Object, required: true },
-    historialPagos: { type: Array,  default: () => [] },
+    historialPagos: { type: Array,  default: () => [] }, // La dejamos por compatibilidad, pero ya no la usamos
     esPremium:      { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['actualizar', 'cancelar']);
 
 const confirmarCancelacion = ref(false);
-const cargandoPago = ref(false); // Para deshabilitar el botón mientras carga
+const cargandoPago = ref(false); 
+const route = useRoute();
+const router = useRouter();
+const mostrarToastExito = ref(false);
 
-const handleCancelar = () => {
-    emit('cancelar');
-    confirmarCancelacion.value = false;
+// ── VARIABLES PARA EL HISTORIAL REAL DE STRIPE ──
+const historialPagosReal = ref([]);
+const cargandoHistorial = ref(true);
+
+// ──FUNCIÓN QUE TRAE LAS FACTURAS DESDE EL BACKEND ──
+const cargarHistorialPagos = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            cargandoHistorial.value = false;
+            return;
+        }
+
+        // Sacamos el ID del JWT
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payloadDecodificado = JSON.parse(window.atob(base64));
+        const userId = payloadDecodificado.id || payloadDecodificado.userId || payloadDecodificado.id_usuario;
+
+        if (!userId) return;
+
+        const response = await fetch(`${API_URL}/api/pagos/historial-pagos/${userId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            historialPagosReal.value = await response.json();
+        }
+    } catch (error) {
+        console.error("Error al cargar facturas de Stripe:", error);
+    } finally {
+        cargandoHistorial.value = false;
+    }
 };
 
-// ──NUEVA FUNCIÓN CON FETCH NATIVO ────────────────────────
+const handleCancelar = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        // Extraemos el ID del JWT
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payloadDecodificado = JSON.parse(window.atob(base64));
+        const userIdDesdeToken = payloadDecodificado.id || payloadDecodificado.userId || payloadDecodificado.id_usuario;
+
+        // Le pegamos al nuevo endpoint de cancelación
+        const response = await fetch(`${API_URL}/api/pagos/cancelar-suscripcion`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ userId: userIdDesdeToken })
+        });
+
+        if (!response.ok) throw new Error('Error al cancelar');
+
+        const data = await response.json();
+
+        if (data.success) {
+            // 1. Actualizamos el carnet del navegador (localStorage)
+            const userLocal = JSON.parse(localStorage.getItem('user') || '{}');
+            userLocal.rol = data.rol;
+            userLocal.nombre_rol = data.rol;
+            userLocal.rol_Id = data.rol_Id;
+            localStorage.setItem('user', JSON.stringify(userLocal));
+
+            // 2. Cerramos el modal
+            confirmarCancelacion.value = false;
+
+            // 3. Hacemos un reload para que se aplique la vista "Gratuita"
+            window.location.reload();
+        }
+
+    } catch (error) {
+        console.error("Error cancelando suscripción:", error);
+        alert("Hubo un problema al intentar cancelar tu suscripción.");
+    }
+};
+
+onMounted(() => {
+    // 1. Disparamos la búsqueda de facturas reales
+    cargarHistorialPagos();
+
+    // 2. Lógica del Toast de éxito
+    if (route.query.pago === 'exito') {
+        mostrarToastExito.value = true;
+        setTimeout(() => {
+            mostrarToastExito.value = false;
+        }, 5000);
+        router.replace({ path: route.path, query: {} });
+    }
+});
+
+// ── FUNCIÓN DE PAGO ─────────────────────────────────
 const irAPagar = async () => {
     cargandoPago.value = true;
     try {
@@ -33,17 +129,11 @@ const irAPagar = async () => {
             return;
         }
 
-        //TRUCO DE SENIOR: Desestructuramos el JWT nativamente para sacar el ID
-        // Un JWT se compone de: Header.Payload.Signature. Agarramos el Payload (posición 1)
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const payloadDecodificado = JSON.parse(window.atob(base64));
         
-        // Buscamos el ID dentro del token descifrado
-        // NOTA: Si en tu backend guardaste el ID en el token como 'id_usuario' o 'userId', cambialo acá abajo:
         const userIdDesdeToken = payloadDecodificado.id || payloadDecodificado.userId || payloadDecodificado.id_usuario;
-
-        console.log("ID recuperado del JWT con éxito:", userIdDesdeToken);
 
         if (!userIdDesdeToken) {
             alert('No se pudo validar el ID de usuario desde la sesión. Volvé a iniciar sesión.');
@@ -57,7 +147,7 @@ const irAPagar = async () => {
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ 
-                userId: userIdDesdeToken // Mandamos el ID real y verificado
+                userId: userIdDesdeToken 
             }) 
         });
 
@@ -82,7 +172,7 @@ const irAPagar = async () => {
 <template>
     <div class="space-y-6">
 
-        <!-- CARD: ESTADO ACTUAL DEL PLAN -->
+        <!-- CARD 1: ESTADO ACTUAL DEL PLAN -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                 <div>
@@ -121,7 +211,6 @@ const irAPagar = async () => {
 
                 <!-- Comparacion de planes -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
                     <!-- Plan Free -->
                     <div :class="!esPremium ? 'border-[#00B4B4] bg-teal-50/30' : 'border-slate-100'"
                         class="rounded-2xl border-2 p-5 transition-all">
@@ -181,20 +270,36 @@ const irAPagar = async () => {
             </div>
         </div>
 
-        <!-- CARD: HISTORIAL DE PAGOS (solo visible si fue o es premium) -->
-        <div v-if="historialPagos.length > 0" class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <!-- CARD 2: HISTORIAL DE PAGOS (AHORA ES DINÁMICA SIEMPRE) -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                 <div>
                     <h3 class="font-black text-slate-800 text-base">Historial de Pagos</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Registro de tus facturas y cobros</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Registro oficial de tus facturas de Stripe</p>
                 </div>
                 <div class="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center">
                     <Receipt :size="16" class="text-violet-500" />
                 </div>
             </div>
 
-            <div class="divide-y divide-slate-50">
-                <div v-for="pago in historialPagos" :key="pago.id"
+            <!-- ESTADO 1: CARGANDO -->
+            <div v-if="cargandoHistorial" class="p-12 text-center flex flex-col items-center justify-center gap-3 text-slate-400">
+                <Loader2 class="animate-spin text-[#00B4B4]" :size="28" />
+                <p class="text-xs font-bold tracking-wide uppercase">Consultando servidores de Stripe...</p>
+            </div>
+
+            <!-- ESTADO 2: VACÍO (Usuario sin pagos) -->
+            <div v-else-if="historialPagosReal.length === 0" class="p-12 text-center text-slate-400">
+                <div class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-slate-300">
+                    <Receipt :size="24" />
+                </div>
+                <p class="text-sm font-bold text-slate-600">No hay pagos registrados</p>
+                <p class="text-xs mt-1 max-w-xs mx-auto text-slate-400">Cuando te suscribas al plan Premium, tus comprobantes de pago aparecerán aquí.</p>
+            </div>
+
+            <!-- ESTADO 3: CON FACTURAS REALES -->
+            <div v-else class="divide-y divide-slate-50">
+                <div v-for="pago in historialPagosReal" :key="pago.id"
                     class="flex items-center justify-between px-6 py-4 hover:bg-slate-50/40 transition-colors">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 bg-slate-50 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -208,7 +313,7 @@ const irAPagar = async () => {
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="font-black text-slate-800 text-sm">${{ pago.monto }}</span>
+                        <span class="font-black text-slate-800 text-sm">${{ pago.monto }} <span class="text-[10px] text-slate-400 font-normal">MXN</span></span>
                         <span
                             :class="pago.estado === 'Pagado' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-500'"
                             class="px-2.5 py-1 rounded-full text-[11px] font-bold"
@@ -243,6 +348,30 @@ const irAPagar = async () => {
                 </div>
             </div>
         </div>
+
+        <!-- TOAST DE ÉXITO -->
+        <transition
+            enter-active-class="transform ease-out duration-300 transition"
+            enter-from-class="translate-y-10 opacity-0"
+            enter-to-class="translate-y-0 opacity-100"
+            leave-active-class="transition ease-in duration-200"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+        >
+            <div v-if="mostrarToastExito" 
+                 class="fixed bottom-6 right-6 z-50 flex items-center gap-4 bg-[#001D3D] text-white px-5 py-4 rounded-2xl shadow-2xl border border-[#00B4B4]/30">
+                <div class="bg-[#00B4B4] rounded-full p-1.5 flex-shrink-0">
+                    <CheckCircle :size="20" class="text-white" />
+                </div>
+                <div>
+                    <p class="font-black text-sm">¡Pago exitoso!</p>
+                    <p class="text-xs text-slate-300">Ya estás suscrito al plan Premium.</p>
+                </div>
+                <button @click="mostrarToastExito = false" class="ml-2 text-slate-400 hover:text-white transition-colors">
+                    <XCircle :size="18" />
+                </button>
+            </div>
+        </transition>
 
     </div>
 </template>

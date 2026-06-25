@@ -38,7 +38,7 @@ export function useAuth() {
     const forzarCierreSeguridad = (mensaje = 'Tu sesión ha caducado por seguridad.') => {
         logoutSession();
         Swal.fire({ title: 'Sesión Expirada', text: mensaje, icon: 'info', confirmButtonColor: '#00B4B4', allowOutsideClick: false })
-            .then(() => router.push('/'));
+            .then(() => router.push('/login'));
     };
 
     // ── 2. LA MAGIA DE LA INACTIVIDAD ─────────────────────────

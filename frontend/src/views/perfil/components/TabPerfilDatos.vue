@@ -146,10 +146,10 @@
                 <div class="flex justify-end mt-5">
                     <button
                         @click="guardarPassword"
-                        :disabled="!passForm.actual || !passForm.nueva || errorConfirmar"
+                        :disabled="guardando || !passForm.actual || !passForm.nueva || errorConfirmar"
                         class="flex items-center gap-2 bg-[#001D3D] hover:bg-[#002a57] disabled:opacity-40 disabled:cursor-not-allowed text-white font-black px-5 py-2.5 rounded-xl text-sm transition-all"
                     >
-                        <Lock :size="14" /> Actualizar contraseña
+                        <Lock :size="14" /> {{ guardando ? 'Actualizando...' : 'Actualizar contraseña' }}
                     </button>
                 </div>
             </div>
@@ -174,21 +174,24 @@ const passForm = reactive({ actual: '', nueva: '', confirmar: '' });
 const mostrarActual  = ref(false);
 const mostrarNueva   = ref(false);
 const passGuardadoOk = ref(false);
+const guardando      = ref(false);
 
-const guardarPassword = () => {
+const guardarPassword = async () => {
+    if (guardando.value) return;
     if (!passForm.actual || !passForm.nueva || !passForm.confirmar) return;
     if (passForm.nueva !== passForm.confirmar) return;
     
-    emit('cambiarPassword', passForm.actual, passForm.nueva);
-    
-    // Limpiamos los inputs
-    passForm.actual = '';
-    passForm.nueva  = '';
-    passForm.confirmar = '';
-    
-    // Mostramos feedback
-    passGuardadoOk.value = true;
-    setTimeout(() => (passGuardadoOk.value = false), 2500);
+    guardando.value = true;
+    try {
+        await emit('cambiarPassword', passForm.actual, passForm.nueva);
+        passForm.actual = '';
+        passForm.nueva  = '';
+        passForm.confirmar = '';
+        passGuardadoOk.value = true;
+        setTimeout(() => (passGuardadoOk.value = false), 2500);
+    } finally {
+        setTimeout(() => guardando.value = false, 600);
+    }
 };
 
 const errorConfirmar = ref(false);

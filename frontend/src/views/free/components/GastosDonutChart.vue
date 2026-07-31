@@ -1,43 +1,45 @@
 <template>
-    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col justify-center h-full">
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-xs flex flex-col justify-center h-full">
 
-        <div class="text-center mb-8">
-            <h3 class="font-black text-slate-800 text-2xl">Tu Total de Gastos</h3>
+        <div class="text-center mb-4 sm:mb-6">
+            <h3 class="font-black text-slate-800 text-xl sm:text-2xl">Tu Total de Gastos</h3>
         </div>
 
-        <div class="flex flex-row items-center w-full">
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-6 w-full">
 
-            <div class="w-1/2 flex justify-center">
-                <div class="relative shadow-sm" style="width: 200px; height: 200px; border-radius: 50%;"
+            <!-- Dona centrada -->
+            <div class="flex justify-center flex-shrink-0">
+                <div class="relative shadow-xs" style="width: 180px; height: 180px; border-radius: 50%;"
                     :style="{ backgroundImage: conicGradient }"
                 >
-                    <div class="absolute m-auto bg-white rounded-full flex flex-col items-center justify-center shadow-sm"
-                        style="width: 130px; height: 130px; top: 35px; left: 35px;"
+                    <div class="absolute m-auto bg-white rounded-full flex flex-col items-center justify-center shadow-xs"
+                        style="width: 116px; height: 116px; top: 32px; left: 32px;"
                     >
-                        <p class="text-4xl font-black text-slate-800">${{ displayTotal.toLocaleString("es-MX") }}</p>
+                        <p class="text-2xl sm:text-3xl font-black text-slate-800 text-center px-1 truncate max-w-[110px]">${{ displayTotal.toLocaleString("es-MX") }}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="w-1/2 pl-2 sm:pl-6 space-y-4">
-                <div v-for="[cat, monto] in sortedDatos" :key="cat" class="flex justify-between items-center gap-2">
+            <!-- Desglose por categorías -->
+            <div class="w-full sm:w-1/2 space-y-2.5">
+                <div v-for="[cat, monto] in sortedDatos" :key="cat" class="flex justify-between items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 transition-colors">
 
-                    <div class="flex items-center gap-2">
-                        <div class="w-3.5 h-3.5 rounded-full shadow-sm flex-shrink-0"
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-3.5 h-3.5 rounded-full shadow-xs flex-shrink-0"
                             :style="{ backgroundColor: colores[cat]?.hex || '#e8e002' }"></div>
-                        <span class="text-lg font-semibold text-slate-700 truncate">{{ cat }}</span>
+                        <span class="text-xs sm:text-sm font-bold text-slate-700 truncate">{{ cat }}</span>
                     </div>
 
                     <div class="flex items-center gap-1.5 whitespace-nowrap">
-                        <span class="text-lg font-black text-slate-800">${{ monto.toLocaleString("es-MX") }}</span>
-                        <ArrowRight size="15px" class="text-slate-400"/>
-                        <span class="text-md font-semibold text-slate-400 ml-1"> {{ calculoPorcentaje(monto) }}%</span>
+                        <span class="text-xs sm:text-sm font-black text-slate-800">${{ monto.toLocaleString("es-MX") }}</span>
+                        <ArrowRight size="13px" class="text-slate-400"/>
+                        <span class="text-xs font-semibold text-slate-400"> {{ calculoPorcentaje(monto) }}%</span>
                     </div>
 
                 </div>
 
-                <div v-if="Object.keys(datos).length === 0" class="text-lg text-slate-400 text-center py-2">
-                    No hay gastos registrados, ¡Empieza registrando uno!.
+                <div v-if="Object.keys(datos).length === 0" class="text-xs sm:text-sm text-slate-400 text-center py-2">
+                    No hay gastos registrados. ¡Empieza registrando uno!
                 </div>
             </div>
         </div>
@@ -47,6 +49,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { ArrowRight } from 'lucide-vue-next';
+import { animationState } from '../../../utils/animationState';
 
 const props = defineProps({
     total: { type: Number, required: true },
@@ -55,8 +58,8 @@ const props = defineProps({
 });
 
 // --- MOTOR DE ORDENAMIENTO Y ANIMACIÓN ---
-const fillProgress = ref(0);
-const displayTotal = ref(0);
+const fillProgress = ref(animationState.donut ? 1 : 0);
+const displayTotal = ref(props.total || 0);
 const datosAnimados = ref({});
 
 const sortedDatos = computed(() => {
@@ -69,6 +72,14 @@ const calculoPorcentaje = (monto) => {
 
 const animarDona = () => {
     if (!props.total) return;
+
+    if (animationState.donut) {
+        fillProgress.value = 1;
+        displayTotal.value = props.total;
+        return;
+    }
+
+    animationState.donut = true;
     let frame = 0;
     const duration = 1500;
     const frameRate = 1000 / 60;
@@ -92,7 +103,14 @@ const animarDona = () => {
 };
 
 onMounted(() => setTimeout(animarDona, 200));
-watch(() => props.total, animarDona);
+watch(() => props.total, () => {
+    if (animationState.donut) {
+        fillProgress.value = 1;
+        displayTotal.value = props.total || 0;
+    } else {
+        animarDona();
+    }
+});
 
 const conicGradient = computed(() => {
     if (!props.total || fillProgress.value === 0) return "conic-gradient(#e2e8f0 0% 100%)";

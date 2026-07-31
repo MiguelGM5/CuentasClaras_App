@@ -134,8 +134,12 @@ export function usePagares(props, emit) {
         formPagare.value.firma = '';
     };
 
+    const guardando = ref(false);
+
     // ── GUARDADO Y API ──────────────────────────────────────
     const guardarNuevoPagare = async () => {
+        if (guardando.value) return;
+
         if(formPagare.value.fecha_vencimiento < fechaHoy){
             return Swal.fire({ title: 'Error', text: 'No se puede usar una fecha menor a la de hoy', icon: 'error', confirmButtonColor: '#f59e0b' });
         }
@@ -147,6 +151,7 @@ export function usePagares(props, emit) {
             return Swal.fire({ title: 'Firma requerida', text: 'El deudor debe firmar.', icon: 'error', confirmButtonColor: '#f59e0b' });
         }
 
+        guardando.value = true;
         try {
             const response = await fetch(`${API_URL}/api/finance/pagares`, {
                 method: 'POST', 
@@ -172,6 +177,8 @@ export function usePagares(props, emit) {
             }
         } catch (error) {
             Swal.fire({ title: 'Sin conexión', text: 'No pudimos comunicarnos con el servidor.', icon: 'error', confirmButtonColor: '#f59e0b' });
+        } finally {
+            setTimeout(() => { guardando.value = false; }, 600);
         }
     };
 
@@ -268,7 +275,7 @@ export function usePagares(props, emit) {
         pagaresAlCorriente, 
         pagaresAtrasados,   
         totalProtegido,     
-        modalPagare, formPagare, canvasFirma,
+        modalPagare, formPagare, canvasFirma, guardando,
         cargarPagares, abrirCrear, empezarDibujo, dibujar, terminarDibujo, limpiarFirma, guardarNuevoPagare,
         descargarPDF, formatearDinero, 
         formatearFechaFormatoLargo, cambiarEstadoPagare

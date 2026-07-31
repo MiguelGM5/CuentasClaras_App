@@ -1,76 +1,107 @@
 <template>
-    <div class="min-h-screen bg-slate-50 flex font-sans">
+    <div class="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
 
-        <Sidebar v-model="tabActivo" 
-            :subtitulo="rolUsuario" :isPremium="esPremium" :items="dynamicMenu"
-            :usuario="datosSidebar" @irAPerfil="router.push('/user/perfil')" 
+        <Sidebar 
+            v-model="tabActivo" 
+            :subtitulo="rolUsuario" 
+            :isPremium="esPremium" 
+            :items="dynamicMenu"
+            :usuario="datosSidebar" 
+            :isOpen="sidebarAbierto"
+            @irAPerfil="router.push('/user/perfil')" 
+            @close="sidebarAbierto = false"
         />
 
-        <main class="ml-60 flex-1 p-8 min-h-screen relative">
-
-            <Transition name="fade">
-                <div v-if="loading"
-                    class="absolute inset-0 bg-slate-50/80 backdrop-blur-sm flex items-center justify-center z-30">
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-10 h-10 border-4 border-[#00B4B4] border-t-transparent rounded-full animate-spin">
-                        </div>
-                        <p class="text-sm font-semibold text-slate-500">Cargando tus finanzas...</p>
-                    </div>
+        <div class="flex-1 flex flex-col min-h-screen min-w-0 md:ml-60">
+            <!-- Header Móvil -->
+            <header class="md:hidden bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+                <div 
+                    @click="tabActivo = 'overview'" 
+                    class="flex items-center gap-2 cursor-pointer group"
+                    title="Ir a Mi Resumen"
+                >
+                    <img src="../../assets/LogoRecortado.png" alt="Cuentas Claras" class="h-8 w-auto object-contain group-hover:scale-105 transition-transform" />
+                    <span class="font-black text-[#001D3D] text-lg group-hover:text-[#00B4B4] transition-colors">Cuentas Claras</span>
                 </div>
-            </Transition>
+                <button 
+                    @click="sidebarAbierto = true"
+                    class="p-2 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"
+                    aria-label="Abrir menú"
+                >
+                    <Menu :size="24" />
+                </button>
+            </header>
 
-            <KeepAlive>
-                <component 
-                    :is="tabsConfig[tabActivo]" 
-                    :isPremium = "esPremium"
-                    :movimientos="movimientos" 
-                    :prestamos="prestamos" 
-                    :metas="metas"
-                    :pagares="pagares" 
-                    :totalIngresos="totalIngresos" 
-                    :totalGastos="totalGastos" 
-                    :saldoActual="saldoActual"
-                    :gastosPorCategoria="gastosPorCategoria" 
-                    :totalPrestado="totalPrestado" 
-                    :totalDeuda="totalDeuda"
-                    :totalAhorradoEnMetas="totalAhorradoEnMetas" 
-                    
-                    @cambiarTab="tabActivo = $event"
-                    
-                    @abrirModalMeta="manejarAbrirMetaDesdeOverview"
-                    @abrirModalMovimiento="manejarAbrirMovimientoDesdeOverview"
-                    @abrirModalPrestamo="manejarAbrirPrestamoDesdeOverview"
-                    
-                    @crearMeta="manejarCrearMeta"
-                    @abonarMeta="manejarAbonoMeta"
-                    @editarMeta="manejarEdicionMeta"
-                    @eliminarMeta="manejarEliminacionMeta" 
+            <main class="flex-1 p-4 sm:p-6 lg:p-8 relative min-w-0">
 
-                    @crearMovimiento="manejarCrearMovimiento"
-                    @crearPrestamo="manejarCrearPrestamo"
-                    @saldarPrestamo="manejarSaldarPrestamo"
-                    
-                    @pagareCreado="manejarCrearPagare"
-                />
-            </KeepAlive>
-        </main>
+                <Transition name="fade">
+                    <div v-if="loading"
+                        class="absolute inset-0 bg-slate-50/80 backdrop-blur-xs flex items-center justify-center z-30">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-10 h-10 border-4 border-[#00B4B4] border-t-transparent rounded-full animate-spin">
+                            </div>
+                            <p class="text-sm font-semibold text-slate-500">Cargando tus finanzas...</p>
+                        </div>
+                    </div>
+                </Transition>
+
+                <KeepAlive>
+                    <Transition name="tab-slide" mode="out-in">
+                        <component 
+                            :is="tabsConfig[tabActivo]" 
+                            :isPremium = "esPremium"
+                            :movimientos="movimientos" 
+                            :prestamos="prestamos" 
+                            :metas="metas"
+                            :pagares="pagares" 
+                            :totalIngresos="totalIngresos" 
+                            :totalGastos="totalGastos" 
+                            :saldoActual="saldoActual"
+                            :gastosPorCategoria="gastosPorCategoria" 
+                            :totalPrestado="totalPrestado" 
+                            :totalDeuda="totalDeuda"
+                            :totalAhorradoEnMetas="totalAhorradoEnMetas" 
+                            
+                            @cambiarTab="tabActivo = $event"
+                            
+                            @abrirModalMeta="manejarAbrirMetaDesdeOverview"
+                            @abrirModalMovimiento="manejarAbrirMovimientoDesdeOverview"
+                            @abrirModalPrestamo="manejarAbrirPrestamoDesdeOverview"
+                            
+                            @crearMeta="manejarCrearMeta"
+                            @abonarMeta="manejarAbonoMeta"
+                            @editarMeta="manejarEdicionMeta"
+                            @eliminarMeta="manejarEliminacionMeta" 
+
+                            @crearMovimiento="manejarCrearMovimiento"
+                            @crearPrestamo="manejarCrearPrestamo"
+                            @saldarPrestamo="manejarSaldarPrestamo"
+                            
+                            @pagareCreado="manejarCrearPagare"
+                        />
+                    </Transition>
+                </KeepAlive>
+            </main>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, defineAsyncComponent } from "vue";
 import { useRouter } from "vue-router";
-import { PieChart, ArrowRightLeft, CreditCard, Target, FileSignature } from "lucide-vue-next";
+import { PieChart, ArrowRightLeft, CreditCard, Target, FileSignature, Menu } from "lucide-vue-next";
 import Swal from "sweetalert2";
+
+const sidebarAbierto = ref(false);
 
 import { useFinance } from "../../composables/useFinance";
 import Sidebar from "../../components/layout/Sidebar.vue";
 
 import TabFreeOverview from "./components/TabFreeOverview.vue";
-import TabFreeMovimientos from "./components/TabFreeMovimientos.vue";
-import TabFreePrestamos from "./components/TabFreePrestamos.vue";
-import TabFreeMetas from "./components/TabFreeMetas.vue";
-import TabPremiumPagares from "./components/TabPremiumPagares.vue";
+const TabFreeMovimientos = defineAsyncComponent(() => import("./components/TabFreeMovimientos.vue"));
+const TabFreePrestamos = defineAsyncComponent(() => import("./components/TabFreePrestamos.vue"));
+const TabFreeMetas = defineAsyncComponent(() => import("./components/TabFreeMetas.vue"));
+const TabPremiumPagares = defineAsyncComponent(() => import("./components/TabPremiumPagares.vue"));
 
 const router = useRouter();
 
@@ -200,11 +231,27 @@ const manejarCrearPagare = (nuevoPagareCompletado) => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-    transition: opacity 0.3s;
+    transition: opacity 0.25s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+
+/* Transición suave entre pestañas */
+.tab-slide-enter-active,
+.tab-slide-leave-active {
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tab-slide-enter-from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.995);
+}
+
+.tab-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
 }
 </style>

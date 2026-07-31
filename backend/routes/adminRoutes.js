@@ -1,11 +1,10 @@
 const express = require('express');
 const router  = express.Router();
-const { verificarToken } = require('../middleware/authMiddleware');
+const { verificarToken, verificarRol } = require('../middleware/authMiddleware');
 const admin   = require('../controllers/adminController');
 
-// Todas las rutas requieren JWT válido
-// (el guard de rol superAdmin está en el router del frontend)
-router.use(verificarToken);
+// Todas las rutas requieren JWT válido y rol superAdmin
+router.use(verificarToken, verificarRol('superAdmin'));
 
 // Usuarios CRUD
 router.get   ('/usuarios',      admin.getUsuarios);

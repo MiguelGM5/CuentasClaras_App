@@ -20,7 +20,8 @@ const loginController = {
             const token = jwt.sign(
                 {
                     id: usuario.id,
-                    email: usuario.email
+                    email: usuario.email,
+                    rol: usuario.nombre_rol
                 },
                 process.env.JWT_SECRET,
                 {
@@ -55,11 +56,17 @@ const loginController = {
     },
     renovarToken: async (req, res) => {
         try {
-            // Como pasa por tu middleware verificarToken, req.usuario ya existe y es válido
+            const usuarioBD = await User.findById(req.usuario.id);
+            const rolActual = usuarioBD ? usuarioBD.nombre_rol : req.usuario.rol;
+
             const renewedToken = jwt.sign(
-                { id: req.usuario.id, email: req.usuario.email },
+                {
+                    id: req.usuario.id,
+                    email: req.usuario.email,
+                    rol: rolActual
+                },
                 process.env.JWT_SECRET,
-                { expiresIn: '1h' } // Le damos 1 horita más de vida
+                { expiresIn: '1h' }
             );
 
             res.status(200).json({ token: renewedToken });

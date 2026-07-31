@@ -42,6 +42,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { Target } from 'lucide-vue-next';
+import { animationState } from '../../../utils/animationState';
 
 const props = defineProps({
     metas: { type: Array, required: true }
@@ -54,7 +55,19 @@ const formatearDinero = (monto) => {
 
 const topMetas = computed(() => (props.metas || []).slice(0, 3));
 const displayMetas = ref([]);
-let motorAnimacion = null; // Variable para matar la animación si se repite
+let motorAnimacion = null;
+
+const fijarMetasDirecto = () => {
+    displayMetas.value = topMetas.value.map(meta => {
+        const actual = meta.montoActual ?? meta.monto_actual ?? 0;
+        const objetivo = meta.montoObjetivo ?? meta.monto_objetivo ?? 1;
+        return {
+            ...meta,
+            displayMonto: actual,
+            displayPorcentaje: Math.min((actual / objetivo) * 100, 100).toFixed(0)
+        };
+    });
+};
 
 const animarMetas = () => {
     if (!topMetas.value.length) {
@@ -62,7 +75,12 @@ const animarMetas = () => {
         return;
     }
 
-    // FRENO DE MANO: Matamos cualquier animación previa para que no se vuelvan locos los números
+    if (animationState.metasBar) {
+        fijarMetasDirecto();
+        return;
+    }
+
+    animationState.metasBar = true;
     if (motorAnimacion) clearInterval(motorAnimacion);
 
     let frame = 0;
@@ -76,10 +94,8 @@ const animarMetas = () => {
         const progress = easeOutQuad(frame / totalFrames);
 
         displayMetas.value = topMetas.value.map(meta => {
-            // 🔥 BLINDAJE ANTI SNAKE-CASE: Leemos ambas variables por si tu BD escupe guiones bajos
             const actual = meta.montoActual ?? meta.monto_actual ?? 0;
-            const objetivo = meta.montoObjetivo ?? meta.monto_objetivo ?? 1; // Evitamos dividir entre 0
-            
+            const objetivo = meta.montoObjetivo ?? meta.monto_objetivo ?? 1;
             const targetPorcentaje = Math.min((actual / objetivo) * 100, 100);
 
             return {
@@ -91,23 +107,17 @@ const animarMetas = () => {
 
         if (frame === totalFrames) {
             clearInterval(motorAnimacion);
-            // Clavamos los valores exactos al terminar
-            displayMetas.value = topMetas.value.map(meta => {
-                const actual = meta.montoActual ?? meta.monto_actual ?? 0;
-                const objetivo = meta.montoObjetivo ?? meta.monto_objetivo ?? 1;
-                return {
-                    ...meta,
-                    displayMonto: actual,
-                    displayPorcentaje: Math.min((actual / objetivo) * 100, 100).toFixed(0)
-                };
-            });
+            fijarMetasDirecto();
         }
     }, frameRate);
 };
 
-//  WATCHER CORREGIDO: Usamos immediate para ahorrarnos el onMounted y vigilar los cambios reales
 watch(() => props.metas, () => {
-    animarMetas();
+    if (animationState.metasBar) {
+        fijarMetasDirecto();
+    } else {
+        animarMetas();
+    }
 }, { deep: true, immediate: true });
 
 </script>

@@ -1,34 +1,34 @@
 <template>
     <div class="h-full flex flex-col">
-        <div class="flex justify-between items-center mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
-                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Mis Préstamos</h1>
-                <p class="text-sm text-slate-400 mt-1">Llevá la cuenta de quién te debe y a quién le debés</p>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Mis Préstamos</h1>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">Llevá la cuenta de quién te debe y a quién le debés</p>
             </div>
             <button @click="abrirCrear"
-                class="flex items-center gap-2 bg-[#00B4B4] hover:bg-[#009291] text-white font-bold px-4 py-2.5 rounded-xl text-md shadow-md transition-all">
-                <Plus :size="20" /> Nuevo Prestamo
+                class="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#00B4B4] hover:bg-[#009291] text-white font-bold px-4 py-2.5 rounded-xl text-sm sm:text-md shadow-md transition-all">
+                <Plus :size="18" /> Nuevo Préstamo
             </button>
         </div>
 
-        <div v-if="isPremium" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white rounded-2xl p-6 border border-amber-100 shadow-sm flex items-center gap-5">
-                <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Clock :size="26" stroke-width="2.5" />
+        <div v-if="isPremium" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-amber-100 shadow-xs flex items-center gap-4 sm:gap-5">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Clock :size="24" stroke-width="2.5" />
                 </div>
                 <div>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Pendientes ({{ prestamosPendientes.length }})</p>
-                    <p class="text-3xl font-black text-slate-800">${{ formatearDinero(totalPendiente) }}</p>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">Pendientes ({{ prestamosPendientes.length }})</p>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-800">${{ formatearDinero(totalPendiente) }}</p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm flex items-center gap-5">
-                <div class="w-14 h-14 bg-emerald-50 text-emerald-400 rounded-full flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 :size="26" stroke-width="2.5" />
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-emerald-100 shadow-xs flex items-center gap-4 sm:gap-5">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-50 text-emerald-400 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 :size="24" stroke-width="2.5" />
                 </div>
                 <div>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Saldados ({{ prestamosSaldados.length }})</p>
-                    <p class="text-3xl font-black text-slate-800">${{ formatearDinero(totalSaldado) }}</p>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">Saldados ({{ prestamosSaldados.length }})</p>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-800">${{ formatearDinero(totalSaldado) }}</p>
                 </div>
             </div>
         </div>
@@ -38,8 +38,8 @@
             
             <template #tipo="{ row }">
                 <span :class="row.tipo === 'prestado' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'"
-                    class="px-2.5 py-1 rounded-lg text-[11px] font-bold w-fit">
-                    {{ row.tipo === "prestado" ? "Yo presté" : "Me prestaron" }}
+                    class="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase">
+                    {{ row.tipo === 'prestado' ? 'Prestado' : 'Pedido' }}
                 </span>
             </template>
             
@@ -109,8 +109,12 @@
 
                     <div class="flex gap-3 mt-6">
                         <button @click="modalPrestamo = false" class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
-                        <button @click="guardarNuevoPrestamo" class="flex-1 bg-[#00B4B4] hover:bg-[#009291] text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-colors">
-                            <Check :size="15" /> Guardar
+                        <button 
+                            @click="guardarNuevoPrestamo" 
+                            :disabled="guardando"
+                            class="flex-1 bg-[#00B4B4] hover:bg-[#009291] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-colors"
+                        >
+                            <Check :size="15" /> {{ guardando ? 'Guardando...' : 'Guardar' }}
                         </button>
                     </div>
                 </div>
@@ -130,6 +134,7 @@ const props = defineProps({ prestamos: Array, isPremium: Boolean});
 const emit = defineEmits(['crearPrestamo', 'saldarPrestamo']);
 
 const fechaHoy = obtenerHoy();
+const guardando = ref(false);
 
 const columnas = [
     { key: 'tipo', label: 'Tipo' }, { key: 'deudor', label: 'Persona' }, { key: 'concepto', label: 'Concepto' },
@@ -185,19 +190,24 @@ const abrirCrear = () => {
     modalPrestamo.value = true;
 };
 
-const guardarNuevoPrestamo = () => {
+const guardarNuevoPrestamo = async () => {
+    if (guardando.value) return;
     const { tipo, deudor, concepto, monto, fecha_pago } = formPrestamo.value;
     if (!tipo || !deudor || !concepto || !monto) {
         return Swal.fire({ title: 'Campos incompletos', text: 'Tipo, persona, concepto y monto son requeridos.', icon: 'warning', confirmButtonColor: '#00B4B4' });
     }
 
-    // 3. CANDADO DEL FRONTEND
     if (fecha_pago && fecha_pago < fechaHoy) {
         return Swal.fire({ title: 'Fecha inválida', text: 'La fecha límite no puede estar en el pasado.', icon: 'warning', confirmButtonColor: '#00B4B4' });
     }
 
-    emit('crearPrestamo', formPrestamo.value);
-    modalPrestamo.value = false;
+    guardando.value = true;
+    try {
+        await emit('crearPrestamo', formPrestamo.value);
+        modalPrestamo.value = false;
+    } finally {
+        setTimeout(() => guardando.value = false, 600);
+    }
 };
 
 const verificarAccesoRapido = () => {

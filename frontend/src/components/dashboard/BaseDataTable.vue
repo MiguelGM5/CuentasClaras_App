@@ -1,7 +1,7 @@
 <template>
-	<div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-    	<div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between gap-3 items-center">
-      		<h2 class="font-black text-slate-800 tracking-tight">{{ titulo }}</h2>
+	<div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
+    	<div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between gap-3 items-center">
+      		<h2 class="font-black text-slate-800 text-lg sm:text-xl tracking-tight w-full sm:w-auto text-left">{{ titulo }}</h2>
       
       		<input 
         		v-model="searchQuery" 
@@ -11,7 +11,34 @@
       		/>
     	</div>
 
-    	<div class="overflow-x-auto">
+		<!-- VISTA MÓVIL: Tarjetas Nativas para dedos (< md) -->
+		<div class="block md:hidden divide-y divide-slate-100">
+			<div 
+				v-for="item in itemsFiltrados" 
+				:key="item.id || item._id" 
+				class="p-4 space-y-2.5 hover:bg-slate-50/60 transition-colors"
+			>
+				<div 
+					v-for="header in headers" 
+					:key="header.key"
+					class="flex justify-between items-center text-xs gap-3"
+				>
+					<span class="font-bold text-slate-400 uppercase tracking-wider text-[10px] flex-shrink-0">{{ header.label }}</span>
+					<div class="font-semibold text-slate-700 text-right min-w-0">
+						<slot :name="header.key" :row="item">
+							{{ item[header.key] }}
+						</slot>
+					</div>
+				</div>
+			</div>
+
+			<div v-if="itemsFiltrados.length === 0" class="p-8 text-center text-xs text-slate-400 font-medium">
+				No se encontraron registros con ese criterio.
+			</div>
+		</div>
+
+    	<!-- VISTA ESCRITORIO: Tabla tradicional (>= md) -->
+    	<div class="hidden md:block overflow-x-auto">
       		<table class="w-full text-left border-collapse">
         		<thead>
           			<tr class="bg-slate-50/70 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -38,7 +65,7 @@
 
           			<tr 
 						v-for="item in itemsFiltrados" 
-						:key="item.id" 
+						:key="item.id || item._id" 
 						class="hover:bg-slate-50/50 transition-colors"
           			>
             			<td v-for="header in headers" :key="header.key" class="px-5 py-3.5">

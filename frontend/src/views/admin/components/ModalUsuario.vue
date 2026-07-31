@@ -39,16 +39,25 @@
         return `${nombre?.[0] ?? ''}${apellido?.[0] ?? ''}`.toUpperCase();
     };
 
-
+    const guardando = ref(false);
+    const manejarGuardar = async () => {
+        if (guardando.value) return;
+        guardando.value = true;
+        try {
+            emit('guardar', { ...localUser.value });
+        } finally {
+            setTimeout(() => guardando.value = false, 600);
+        }
+    };
 </script>
 
 <template>
     <Transition name="modal">
         <div v-if="modelValue"
-            class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            mousedown.self="$emit('update:modelValue', false)"
+            class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50"
+            @mousedown.self="$emit('update:modelValue', false)"
         >
-            <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <div class="bg-white rounded-3xl w-[95%] sm:max-w-md max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl">
 
                 <div class="flex justify-between items-start mb-6">
                     <div>
@@ -186,11 +195,13 @@
                         >
                             Cancelar
                         </button>
-                        <button @click="$emit('guardar', { ...localUser })"
-                            class="flex-1 bg-[#00B4B4] hover:bg-[#009291] text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-colors"
+                        <button 
+                            @click="manejarGuardar"
+                            :disabled="guardando"
+                            class="flex-1 bg-[#00B4B4] hover:bg-[#009291] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-colors"
                         >
                             <Check :size="15" />
-                            {{ mode === 'create' ? 'Crear Usuario' : 'Guardar Cambios' }}
+                            {{ guardando ? 'Guardando...' : (mode === 'create' ? 'Crear Usuario' : 'Guardar Cambios') }}
                         </button>
                     </template>
                 </div>

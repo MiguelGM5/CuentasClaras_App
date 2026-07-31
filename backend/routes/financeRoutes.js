@@ -1,6 +1,6 @@
 const express  = require('express');
 const router   = express.Router();
-const { verificarToken } = require('../middleware/authMiddleware');
+const { verificarToken, verificarRol } = require('../middleware/authMiddleware');
 const finance  = require('../controllers/financeController');
 
 // Todas las rutas requieren JWT válido
@@ -21,9 +21,10 @@ router.post('/metas',                 finance.createMeta);
 router.put ('/metas/:id',             finance.updateMeta);
 router.delete('/metas/:id',           finance.deleteMeta);
 
-// Pagarés (el frontend solo los llama si el usuario es premium)
-router.get ('/pagares',               finance.getPagares);
-router.post('/pagares',               finance.createPagare);
-router.put('/pagares/:id/estado', finance.updateEstadoPagare);
+// Pagarés (Solo usuarios Premium o superAdmin)
+const esPro = verificarRol('Premium', 'superAdmin');
+router.get ('/pagares',               esPro, finance.getPagares);
+router.post('/pagares',               esPro, finance.createPagare);
+router.put('/pagares/:id/estado',     esPro, finance.updateEstadoPagare);
 
 module.exports = router;

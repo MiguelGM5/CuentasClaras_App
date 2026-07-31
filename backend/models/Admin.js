@@ -12,8 +12,8 @@ const Admin = {
                     DATE_FORMAT(u.createdAt, '%Y-%m-%d') AS fechaRegistro,
                     r.nombre_rol        AS rol,
                     r.id                AS rol_id
-             FROM test.usuarios u
-             INNER JOIN test.roles r ON u.rol_Id = r.id
+             FROM usuarios u
+             INNER JOIN roles r ON u.rol_Id = r.id
              ORDER BY u.createdAt DESC`,
     );
     return rows;
@@ -28,7 +28,7 @@ const Admin = {
     rol_id,
   }) => {
     const [result] = await db.execute(
-      `INSERT INTO test.usuarios
+      `INSERT INTO usuarios
                 (nombre, apellido_paterno, apellido_materno, email, password, rol_Id)
              VALUES (?, ?, ?, ?, ?, ?)`,
       [
@@ -48,7 +48,7 @@ const Admin = {
     { nombre, apellidoPaterno, apellidoMaterno, email, rol_id, status },
   ) => {
     await db.execute(
-      `UPDATE test.usuarios
+      `UPDATE usuarios
              SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, rol_Id=?, status=?
              WHERE id=?`,
       [
@@ -64,7 +64,7 @@ const Admin = {
   },
 
   deleteUsuario: async (id) => {
-    await db.execute("DELETE FROM test.usuarios WHERE id = ?", [id]);
+    await db.execute("DELETE FROM usuarios WHERE id = ?", [id]);
   },
 
   // ─────────────────────────────────────────
@@ -78,8 +78,8 @@ const Admin = {
             p.tipo, p.deudor, p.concepto, p.monto, p.estado,
             DATE_FORMAT(p.fecha_pago, '%Y-%m-%d') AS fechaPago,
             DATE_FORMAT(DATE_SUB(p.createdAt, INTERVAL 6 HOUR), '%Y-%m-%d') AS fecha        
-        FROM test.prestamos p
-        INNER JOIN test.usuarios u ON p.usuario_id = u.id
+        FROM prestamos p
+        INNER JOIN usuarios u ON p.usuario_id = u.id
         ORDER BY p.id DESC`,
     );
     return rows;
@@ -95,8 +95,8 @@ const Admin = {
                     CONCAT(u.nombre,' ',u.apellido_paterno)         AS usuarioNombre,
                     m.categoria, m.monto, m.descripcion,
                     DATE_FORMAT(m.fecha, '%Y-%m-%d')                AS fecha
-             FROM test.movimientos m
-             INNER JOIN test.usuarios u ON m.usuario_id = u.id
+             FROM movimientos m
+             INNER JOIN usuarios u ON m.usuario_id = u.id
              WHERE m.tipo = 'gasto'
              ORDER BY m.fecha DESC`,
     );
@@ -110,15 +110,15 @@ const Admin = {
     // Distribución de usuarios por rol (excluyendo superAdmin del conteo)
     const [byRol] = await db.execute(
         `SELECT r.nombre_rol AS rol, COUNT(*) AS total
-             FROM test.usuarios u
-             INNER JOIN test.roles r ON u.rol_Id = r.id
+             FROM usuarios u
+             INNER JOIN roles r ON u.rol_Id = r.id
              GROUP BY r.nombre_rol`,
     );
 
     // Préstamos registrados por día — últimos 7 días
     const [loansByDay] = await db.execute(
         `SELECT DATE_FORMAT(createdAt, '%Y-%m-%d') AS fecha, COUNT(*) AS total
-             FROM test.prestamos
+             FROM prestamos
              WHERE createdAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)
              GROUP BY DATE_FORMAT(createdAt, '%Y-%m-%d')
              ORDER BY fecha ASC`,

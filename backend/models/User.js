@@ -5,8 +5,8 @@ const User = {
         const query = `
             SELECT u.*, r.nombre_rol,
                    DATEDIFF(NOW(), u.createdAt) AS dias_miembro
-            FROM test.usuarios u 
-            INNER JOIN test.roles r ON u.rol_Id = r.id 
+            FROM usuarios u 
+            INNER JOIN roles r ON u.rol_Id = r.id 
             WHERE u.email = ? AND u.status = 1
         `;
         const [rows] = await db.execute(query, [email]);
@@ -17,8 +17,8 @@ const User = {
         const query = `
             SELECT u.*, r.nombre_rol,
                    DATEDIFF(NOW(), u.createdAt) AS dias_miembro
-            FROM test.usuarios u 
-            INNER JOIN test.roles r ON u.rol_Id = r.id 
+            FROM usuarios u 
+            INNER JOIN roles r ON u.rol_Id = r.id 
             WHERE u.id = ? AND u.status = 1
         `;
         const [rows] = await db.execute(query, [id]);
@@ -28,7 +28,7 @@ const User = {
     create: async (userData) => {
         const { nombre, apellidoPaterno, apellidoMaterno, email, password } = userData;
         const createQuery = `
-            INSERT INTO test.usuarios (nombre, apellido_paterno, apellido_materno, email, password)
+            INSERT INTO usuarios (nombre, apellido_paterno, apellido_materno, email, password)
             VALUES (?, ?, ?, ?, ?)
         `;
         const [result] = await db.execute(createQuery, [nombre, apellidoPaterno, apellidoMaterno, email, password]);
@@ -37,7 +37,7 @@ const User = {
 
     // ── ACTUALIZAR CONTRASEÑA ────────────────────────────
     updatePassword: async (id, newHashedPassword) => {
-        const query = 'UPDATE test.usuarios SET password = ? WHERE id = ?';
+        const query = 'UPDATE usuarios SET password = ? WHERE id = ?';
         const [result] = await db.execute(query, [newHashedPassword, id]);
         return result.affectedRows > 0;
     },
@@ -46,7 +46,7 @@ const User = {
     
     actualizarSuscripcionPro: async (userId, customerId, subscriptionId) => {
         const query = `
-            UPDATE test.usuarios 
+            UPDATE usuarios 
             SET rol_Id = 3, 
                 stripe_customer_id = ?, 
                 stripe_subscription_id = ? 
@@ -58,7 +58,7 @@ const User = {
 
     cancelarSuscripcionPro: async (subscriptionId) => {
         const query = `
-            UPDATE test.usuarios 
+            UPDATE usuarios 
             SET rol_Id = 2, 
                 stripe_subscription_id = NULL 
             WHERE stripe_subscription_id = ?

@@ -108,9 +108,9 @@
         <!-- ═══════════════════════════════════════════════════════ -->
         <Transition name="modal">
             <div v-if="modalMovimiento"
-                class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+                class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50"
                 @mousedown.self="modalMovimiento = false">
-                <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+                <div class="bg-white rounded-3xl w-[95%] sm:max-w-md max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl">
 
                     <div class="flex justify-between items-start mb-6">
                         <div>
@@ -170,8 +170,9 @@
                         <button @click="modalMovimiento = false"
                             class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
                         <button @click="guardarNuevaMovimiento"
-                            :class="['flex-1 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition-colors', formMovimiento.tipo === 'ingreso' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600']">
-                            <Check :size="15" /> Guardar
+                            :disabled="guardando"
+                            :class="['flex-1 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed', formMovimiento.tipo === 'ingreso' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600']">
+                            <Check :size="15" /> {{ guardando ? 'Guardando...' : 'Guardar' }}
                         </button>
                     </div>
                 </div>
@@ -196,6 +197,7 @@ const props = defineProps({
 const emit = defineEmits(['crearMovimiento']);
 
 const fechaHoy = obtenerHoy();
+const guardando = ref(false);
 
 const columnas = [
     { key: 'tipo', label: 'Tipo' }, { key: 'categoria', label: 'Categoría' },
@@ -252,19 +254,24 @@ const abrirCrear = () => {
     modalMovimiento.value = true;
 };
 
-const guardarNuevaMovimiento = () => {
+const guardarNuevaMovimiento = async () => {
+    if (guardando.value) return;
     const { tipo, categoria, descripcion, monto, fecha } = formMovimiento.value;
     if (!tipo || !categoria || !descripcion || !monto || !fecha) {
         return Swal.fire({ title: 'Campos incompletos', text: 'Completa todos los campos antes de guardar.', icon: 'warning', confirmButtonColor: '#00B4B4' });
     }
 
-    // 3. SEGUNDO CANDADO EN EL FRONTEND
     if (fecha > fechaHoy) {
         return Swal.fire({ title: '¡No se puede!', text: 'La fecha no puede ser posterior a hoy.', icon: 'warning', confirmButtonColor: '#00B4B4' });
     }
 
-    emit('crearMovimiento', formMovimiento.value);
-    modalMovimiento.value = false;
+    guardando.value = true;
+    try {
+        await emit('crearMovimiento', formMovimiento.value);
+        modalMovimiento.value = false;
+    } finally {
+        setTimeout(() => { guardando.value = false; }, 600);
+    }
 };
 
 const verificarAccesoRapido = () => {

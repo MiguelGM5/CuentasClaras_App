@@ -14,12 +14,23 @@ const displayTotal = ref(0);
 const displayFree = ref(0);
 const displayPremium = ref(0);
 
+let yaAnimadoUserDonut = false;
+
 const animarDona = () => {
     if (!props.total) return;
 
+    if (yaAnimadoUserDonut) {
+        fillProgress.value = 1;
+        displayTotal.value = props.total;
+        displayFree.value = props.free;
+        displayPremium.value = props.premium;
+        return;
+    }
+
+    yaAnimadoUserDonut = true;
     let frame = 0;
     const duration = 1500;
-    const frameRate = 1000 / 60; // 60 FPS clavados
+    const frameRate = 1000 / 60;
     const totalFrames = Math.round(duration / frameRate);
     const easeOutQuad = t => t * (2 - t);
 
@@ -29,7 +40,6 @@ const animarDona = () => {
         frame++;
         const progress = easeOutQuad(frame / totalFrames);
         
-        // Crecemos todo al mismo ritmo
         fillProgress.value = progress;
         displayTotal.value = Math.round(props.total * progress);
         displayFree.value = Math.round(props.free * progress);
@@ -37,7 +47,7 @@ const animarDona = () => {
 
         if (frame === totalFrames) {
             clearInterval(counter);
-            fillProgress.value = 1; // 100% de la animación
+            fillProgress.value = 1;
             displayTotal.value = props.total;
             displayFree.value = props.free;
             displayPremium.value = props.premium;
@@ -49,8 +59,16 @@ onMounted(() => {
     setTimeout(animarDona, 200);
 });
 
-// Si agregás usuarios, se vuelve a animar
-watch(() => props.total, animarDona);
+watch(() => props.total, () => {
+    if (yaAnimadoUserDonut) {
+        fillProgress.value = 1;
+        displayTotal.value = props.total || 0;
+        displayFree.value = props.free || 0;
+        displayPremium.value = props.premium || 0;
+    } else {
+        animarDona();
+    }
+});
 
 const calculoPorcentaje = plan => {
     return ((plan / (props.total)) * 100).toFixed(0);

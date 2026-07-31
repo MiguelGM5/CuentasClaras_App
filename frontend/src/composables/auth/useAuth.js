@@ -2,6 +2,7 @@ import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2";
 import { API_URL } from "../../constants/api";
+import { resetAnimationState } from "../../utils/animationState";
 
 const token = ref(localStorage.getItem('token'));
 const user = ref(null);
@@ -24,6 +25,7 @@ export function useAuth() {
 
     // ── 1. CERRAR SESIÓN ──────────────────────────────────────
     const logoutSession = () => {
+        resetAnimationState();
         token.value = null;
         user.value = null;
         localStorage.removeItem('token');
@@ -146,6 +148,7 @@ export function useAuth() {
 
     // ── 6. LOGIN EXPORT ───────────────────────────────────────
     const loginSession = (newToken, newUser) => {
+        resetAnimationState();
         token.value = newToken;
         user.value = newUser;
         localStorage.setItem('token', newToken);

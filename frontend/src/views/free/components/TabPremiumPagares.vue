@@ -75,25 +75,34 @@
             </template>
             
             <template #acciones="{ row }">
-                <div class="flex items-center gap-1.5">
-                    <button @click="descargarPDF(row)" title="Descargar PDF Legal" class="p-1.5 bg-slate-50 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded-lg transition-colors border border-slate-100 hover:border-amber-200 shadow-sm">
+                <div class="flex flex-wrap sm:flex-nowrap items-center justify-end gap-2 pt-1">
+                    <button 
+                        @click="descargarPDF(row)" 
+                        title="Descargar PDF Legal" 
+                        class="flex-1 sm:flex-none px-3 py-2 bg-amber-50 hover:bg-amber-500 text-amber-700 hover:text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all border border-amber-200 shadow-2xs active:scale-95"
+                    >
                         <Download :size="15" />
+                        <span>Descargar PDF</span>
                     </button>
-                    
+
                     <button 
                         v-if="row.estado?.toLowerCase() !== 'liquidado' && row.estado?.toLowerCase() !== 'atrasado'" 
                         @click="cambiarEstadoPagare(row.id, 'Atrasado')" 
                         title="Marcar como Atrasado" 
-                        class="p-1.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors border border-slate-100 hover:border-red-200 shadow-sm">
+                        class="px-2.5 py-2 bg-red-50 hover:bg-red-500 text-red-600 hover:text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1 transition-all border border-red-200 shadow-2xs active:scale-95"
+                    >
                         <AlertCircle :size="15" />
+                        <span>Atrasado</span>
                     </button>
 
                     <button 
                         v-if="row.estado?.toLowerCase() !== 'liquidado'" 
                         @click="cambiarEstadoPagare(row.id, 'liquidado')" 
                         title="Liquidar Pagaré" 
-                        class="p-1.5 bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-500 rounded-lg transition-colors border border-slate-100 hover:border-emerald-200 shadow-sm">
+                        class="px-2.5 py-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1 transition-all border border-emerald-200 shadow-2xs active:scale-95"
+                    >
                         <CheckCircle2 :size="15" />
+                        <span>Liquidar</span>
                     </button>
                 </div>
             </template>
@@ -184,9 +193,12 @@
                             class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">
                             Cancelar
                         </button>
-                        <button @click="guardarNuevoPagare"
-                            class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition-colors">
-                            <Check :size="15" /> Generar Documento
+                        <button 
+                            @click="guardarNuevoPagare"
+                            :disabled="guardando"
+                            class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition-colors"
+                        >
+                            <Check :size="15" /> {{ guardando ? 'Generando...' : 'Generar Documento' }}
                         </button>
                     </div>
                 </div>
@@ -218,7 +230,7 @@ const columnas = [
 
 // Inicializamos todo el motor lógico y destructuramos las variables para el HTML
 const { 
-    fechaHoy, modalPagare, formPagare, canvasFirma, pagaresAlCorriente, pagaresAtrasados, totalProtegido, 
+    fechaHoy, modalPagare, formPagare, canvasFirma, guardando, pagaresAlCorriente, pagaresAtrasados, totalProtegido, 
     abrirCrear, empezarDibujo, dibujar, terminarDibujo, limpiarFirma, guardarNuevoPagare,
     descargarPDF, formatearDinero, formatearFechaFormatoLargo, cambiarEstadoPagare       
 } = usePagares(props, emit);

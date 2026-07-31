@@ -1,14 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
+const { verificarToken } = require('../middleware/authMiddleware');
 const User = require('../models/User');
+
+// Helper para verificar propiedad del recurso o rol de superAdmin
+const esMismoUsuarioOSuperAdmin = (req, targetUserId) => {
+    const usuarioId = req.usuario?.id;
+    const rol = (req.usuario?.rol || '').toString().trim().toLowerCase();
+    return String(usuarioId) === String(targetUserId) || rol === 'superadmin';
+};
+
+// Todas las rutas de este router requieren autenticación mediante JWT
+router.use(verificarToken);
 
 router.post('/crear-checkout', async (req, res) => {
     const { userId } = req.body; // El ID del usuario que quiere ser PRO
 
     if (!userId) {
         return res.status(400).json({ error: 'Falta el userId' });
+    }
+
+    if (!esMismoUsuarioOSuperAdmin(req, userId)) {
+        return res.status(403).json({ error: 'Acceso no autorizado para este usuario' });
     }
 
     try {
@@ -34,6 +48,10 @@ router.post('/crear-checkout', async (req, res) => {
 });
 
 router.get('/historial-pagos/:userId', async (req, res) => {
+    if (!esMismoUsuarioOSuperAdmin(req, req.params.userId)) {
+        return res.status(403).json({ error: 'Acceso no autorizado para este usuario' });
+    }
+
     try {
         // 1. Buscás al usuario en la DB para sacar su stripe_customer_id
         const user = await User.findById(req.params.userId); // Ajustá según tu modelo
@@ -73,6 +91,10 @@ router.get('/historial-pagos/:userId', async (req, res) => {
 });
 
 router.get('/perfil-actualizado/:userId', async (req, res) => {
+    if (!esMismoUsuarioOSuperAdmin(req, req.params.userId)) {
+        return res.status(403).json({ error: 'Acceso no autorizado para este usuario' });
+    }
+
     try {
         const user = await User.findById(req.params.userId);
         if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -92,6 +114,10 @@ router.post('/cancelar-suscripcion', async (req, res) => {
     const { userId } = req.body;
 
     if (!userId) return res.status(400).json({ error: 'Falta el userId' });
+
+    if (!esMismoUsuarioOSuperAdmin(req, userId)) {
+        return res.status(403).json({ error: 'Acceso no autorizado para este usuario' });
+    }
 
     try {
         const user = await User.findById(userId);

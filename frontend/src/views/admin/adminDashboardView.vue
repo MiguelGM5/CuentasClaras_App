@@ -1,19 +1,20 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, defineAsyncComponent } from "vue";
 import { useRouter } from "vue-router";
-import { Users, CreditCard, LayoutDashboard, Receipt, Import, Pencil } from "lucide-vue-next";
+import { Users, CreditCard, LayoutDashboard, Receipt, Import, Pencil, Menu } from "lucide-vue-next";
 
 import { useAdmin } from "../../composables/useAdmin.js";
 
 //Componentes de la UI
 import Sidebar from "../../components/layout/Sidebar.vue";
-import ModalUsuario from "./components/ModalUsuario.vue";
-import TabGastos from "./components/TabGastos.vue";
 import TabOverview from "./components/TabOverview.vue";
-import TabPrestamos from "./components/TabPrestamos.vue";
-import TabUsuarios from "./components/TabUsuarios.vue";
+const TabUsuarios = defineAsyncComponent(() => import("./components/TabUsuarios.vue"));
+const TabPrestamos = defineAsyncComponent(() => import("./components/TabPrestamos.vue"));
+const TabGastos = defineAsyncComponent(() => import("./components/TabGastos.vue"));
+const ModalUsuario = defineAsyncComponent(() => import("./components/ModalUsuario.vue"));
 
 const router = useRouter();
+const sidebarAbierto = ref(false);
 
 const {
 	usuarios, 
@@ -42,11 +43,11 @@ const tabsConfig = {
     prestamos: TabPrestamos,
     gastos: TabGastos
 };
-const usuarioSesion = JSON.parse(localStorage.getItem('user'));
-const rolUsuario = usuarioSesion.rol;
+const usuarioSesion = JSON.parse(localStorage.getItem('user') || '{}');
+const rolUsuario = usuarioSesion.rol || 'superAdmin';
 const datosSidebar = {
-    nombre: `${usuarioSesion.nombre} ${usuarioSesion.apellido_paterno}`,
-    inicial: usuarioSesion.nombre.charAt(0).toUpperCase()
+    nombre: `${usuarioSesion.nombre || 'Super'} ${usuarioSesion.apellido_paterno || 'Admin'}`,
+    inicial: (usuarioSesion.nombre || 'S').charAt(0).toUpperCase()
 }
 
 const menuAdmin = [
@@ -55,7 +56,6 @@ const menuAdmin = [
     { key: 'prestamos', label: 'Préstamos',  icon: CreditCard      },
     { key: 'gastos',    label: 'Gastos',     icon: Receipt         },
 ];
-const datosAdminLogueado = { nombre: 'Super Admin', email: 'admin@cuentasclaras.mx', inicial: 'A' };
 
 const modalUsuario = ref(false);
 const modalModo = ref("create"); 
@@ -85,50 +85,73 @@ const procesarGuardado = (datos) => {
 };
 
 const cerrarSesion = () => {
-	localStorage.removeItem("usuario");
-	router.push("/");
+	localStorage.removeItem("user");
+	localStorage.removeItem("token");
+	router.push("/login");
 };
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50 flex font-sans">
+    <div class="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
 
         <Sidebar 
             v-model="tabActivo" 
             :subtitulo="rolUsuario" 
             :items="menuAdmin" 
             :usuario="datosSidebar" 
+            :isOpen="sidebarAbierto"
             @logout="cerrarSesion" 
             @irAPerfil="router.push('/admin/perfil')"
+            @close="sidebarAbierto = false"
         />
 
-        <main class="ml-60 flex-1 p-8 min-h-screen">
-			<keep-alive>
-				<component 
-					:is="tabsConfig[tabActivo]"
-					:usuarios="usuarios"
-					:prestamos="prestamos"
-					:gastos="gastos"
-					:totalUsuarios="totalUsuarios"
-					:cntFree="cntFree"
-					:cntPremium="cntPremium"
-					:cntActivos="cntActivos"
-					:totalPrestamos="totalPrestamos"
-					:prestamosPendientes="prestamosPendientes"
-					:montoPrestado="montoPrestado"
-					:montoPedido="montoPedido"
-					:totalGastos="totalGastos"
-					:promedioGasto="promedioGasto"
-					@cambiarTab="tabActivo = $event"
-					@abrirCrear="abrirCrear"
-					@abrirVer="abrirVer"
-					@abrirEditar="abrirEditar"
-					@eliminarUsuario="eliminarUsuarioDB" 
-					@toggleStatus="toggleStatusDB" 
-            	/>
-			</keep-alive>
-            
-        </main>
+        <div class="flex-1 flex flex-col min-h-screen min-w-0 md:ml-60">
+            <!-- Header Móvil Admin -->
+            <header class="md:hidden bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+                <div 
+                    @click="tabActivo = 'overview'" 
+                    class="flex items-center gap-2 cursor-pointer group"
+                    title="Ir a Dashboard"
+                >
+                    <img src="../../assets/LogoRecortado.png" alt="Admin" class="h-8 w-auto object-contain group-hover:scale-105 transition-transform" />
+                    <span class="font-black text-[#001D3D] text-lg group-hover:text-[#00B4B4] transition-colors">Panel Admin</span>
+                </div>
+                <button 
+                    @click="sidebarAbierto = true"
+                    class="p-2 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"
+                    aria-label="Abrir menú"
+                >
+                    <Menu :size="24" />
+                </button>
+            </header>
+
+            <main class="flex-1 p-4 sm:p-6 lg:p-8 min-w-0">
+                <keep-alive>
+                    <component 
+                        :is="tabsConfig[tabActivo]"
+                        :usuarios="usuarios"
+                        :prestamos="prestamos"
+                        :gastos="gastos"
+                        :totalUsuarios="totalUsuarios"
+                        :cntFree="cntFree"
+                        :cntPremium="cntPremium"
+                        :cntActivos="cntActivos"
+                        :totalPrestamos="totalPrestamos"
+                        :prestamosPendientes="prestamosPendientes"
+                        :montoPrestado="montoPrestado"
+                        :montoPedido="montoPedido"
+                        :totalGastos="totalGastos"
+                        :promedioGasto="promedioGasto"
+                        @cambiarTab="tabActivo = $event"
+                        @abrirCrear="abrirCrear"
+                        @abrirVer="abrirVer"
+                        @abrirEditar="abrirEditar"
+                        @eliminarUsuario="eliminarUsuarioDB" 
+                        @toggleStatus="toggleStatusDB" 
+                    />
+                </keep-alive>
+            </main>
+        </div>
 
         <ModalUsuario 
             v-model="modalUsuario" 

@@ -12,6 +12,10 @@ const loginController = require('./controllers/loginController');
 const financeRoutes = require('./routes/financeRoutes');
 const adminRoutes   = require('./routes/adminRoutes');
 
+const { securityHeaders, rateLimiter, errorHandler } = require('./middleware/securityMiddleware');
+
+app.use(securityHeaders);
+
 app.use(cors({
     origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -23,12 +27,19 @@ app.post('/api/pagos/webhook', express.raw({ type: 'application/json' }), webhoo
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-app.post('/api/register', registerController.register);
-app.post('/api/login', loginController.login);
+const { verificarToken } = require('./middleware/authMiddleware');
 
-app.use('/api/pagos', pagoRoutes)
+const authLimiter = rateLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
+
+app.post('/api/register', authLimiter, registerController.register);
+app.post('/api/login', authLimiter, loginController.login);
+app.get('/api/auth/refresh', verificarToken, loginController.renovarToken);
+
+app.use('/api/pagos', pagoRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/admin', adminRoutes);
+
+app.use(errorHandler);
 
 app.listen(PORT, ()=>{
     console.log(`Servidor corriendo en http://localhost:${PORT}`);

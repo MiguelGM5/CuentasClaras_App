@@ -64,71 +64,67 @@
             <template #fechaPago="{ row }"><span class="text-xs text-slate-400">{{ row.fechaPago ? formatearFecha(row.fechaPago) : 'Sin límite' }}</span></template>
         </BaseDataTable>
 
-        <Transition name="modal">
-            <div v-if="modalPrestamo" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @mousedown.self="modalPrestamo = false">
-                <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="font-black text-xl text-slate-800">Registrar Préstamo</h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Lleva la cuenta de préstamos informales</p>
-                        </div>
-                        <button @click="modalPrestamo = false" class="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors"><X :size="17" /></button>
-                    </div>
+        <BaseModal 
+            v-model="modalPrestamo"
+            title="Registrar Préstamo"
+            subtitle="Lleva la cuenta de préstamos informales"
+        >
+            <div class="flex gap-3 mb-5">
+                <button v-for="t in [{ key: 'prestado', label: 'Yo presté' }, { key: 'pedido', label: 'Me prestaron' }]" :key="t.key" @click="formPrestamo.tipo = t.key" :class="[
+                    'flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border',
+                    formPrestamo.tipo === t.key ? 'bg-[#00B4B4] text-white border-[#00B4B4] shadow-md shadow-teal-100' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                ]">
+                    <component :is="t.key === 'prestado' ? ArrowUpRight : ArrowDownLeft" :size="16" /> {{ t.label }}
+                </button>
+            </div>
 
-                    <div class="flex gap-3 mb-5">
-                        <button v-for="t in [{ key: 'prestado', label: 'Yo presté' }, { key: 'pedido', label: 'Me prestaron' }]" :key="t.key" @click="formPrestamo.tipo = t.key" :class="[
-                            'flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border',
-                            formPrestamo.tipo === t.key ? 'bg-[#00B4B4] text-white border-[#00B4B4] shadow-md shadow-teal-100' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
-                        ]">
-                            <component :is="t.key === 'prestado' ? ArrowUpRight : ArrowDownLeft" :size="16" /> {{ t.label }}
-                        </button>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                        {{ formPrestamo.tipo === 'prestado' ? '¿A quién le prestaste? *' : '¿Quién te prestó? *' }}
+                    </label>
+                    <input v-model="formPrestamo.deudor" type="text" placeholder="Nombre de la persona" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Concepto *</label>
+                    <input v-model="formPrestamo.concepto" type="text" placeholder="¿Para qué fue?" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Monto (MXN) *</label>
+                        <input v-model="formPrestamo.monto" type="number" min="1" placeholder="0.00" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                     </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                                {{ formPrestamo.tipo === 'prestado' ? '¿A quién le prestaste? *' : '¿Quién te prestó? *' }}
-                            </label>
-                            <input v-model="formPrestamo.deudor" type="text" placeholder="Nombre de la persona" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                        </div>
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Concepto *</label>
-                            <input v-model="formPrestamo.concepto" type="text" placeholder="¿Para qué fue?" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Monto (MXN) *</label>
-                                <input v-model="formPrestamo.monto" type="number" min="1" placeholder="0.00" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                            </div>
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha Límite</label>
-                                <input v-model="formPrestamo.fecha_pago" type="date" :min="fechaHoy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 mt-6">
-                        <button @click="modalPrestamo = false" class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
-                        <button 
-                            @click="guardarNuevoPrestamo" 
-                            :disabled="guardando"
-                            class="flex-1 bg-[#00B4B4] hover:bg-[#009291] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-colors"
-                        >
-                            <Check :size="15" /> {{ guardando ? 'Guardando...' : 'Guardar' }}
-                        </button>
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha Límite</label>
+                        <input v-model="formPrestamo.fecha_pago" type="date" :min="fechaHoy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                     </div>
                 </div>
             </div>
-        </Transition>
+
+            <template #footer>
+                <div class="flex gap-3">
+                    <button @click="modalPrestamo = false" class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
+                    <button 
+                        @click="guardarNuevoPrestamo" 
+                        :disabled="guardando"
+                        class="flex-1 bg-[#00B4B4] hover:bg-[#009291] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-colors"
+                    >
+                        <Check :size="15" /> {{ guardando ? 'Guardando...' : 'Guardar' }}
+                    </button>
+                </div>
+            </template>
+        </BaseModal>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onActivated } from 'vue';
-import { Plus, ArrowDownLeft, ArrowUpRight, X, Check, Clock, CheckCircle2 } from 'lucide-vue-next';
+import { Plus, ArrowDownLeft, ArrowUpRight, Check, Clock, CheckCircle2 } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
 import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
+import BaseModal from '../../../components/common/BaseModal.vue';
 import { obtenerHoy } from '../../../utils/date.js';
+import { formatearDinero, formatearFecha } from '../../../utils/format.js';
 
 const props = defineProps({ prestamos: Array, isPremium: Boolean});
 const emit = defineEmits(['crearPrestamo', 'saldarPrestamo']);
@@ -141,25 +137,11 @@ const columnas = [
     { key: 'monto', label: 'Monto' }, { key: 'estado', label: 'Estado' }, { key: 'fechaPago', label: 'Límite' }
 ];
 
-const formatearDinero = (monto) => {
-    return Number(monto).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-};
-
 const prestamosPendientes = computed(() => props.prestamos.filter(p => p.estado === 'Pendiente'));
 const prestamosSaldados = computed(() => props.prestamos.filter(p => p.estado === 'Saldado'));
 
 const totalPendiente = computed(() => prestamosPendientes.value.reduce((acc, p) => acc + Number(p.monto), 0));
 const totalSaldado = computed(() => prestamosSaldados.value.reduce((acc, p) => acc + Number(p.monto), 0));
-
-const formatearFecha = (fechaStr) => {
-    if (!fechaStr) return '';
-    const [year, month, day] = fechaStr.split('T')[0].split('-');
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString("es-MX", { year: 'numeric', month: 'short', day: 'numeric' });
-};
 
 const confirmarSaldar = (prestamo) => {
     const mensaje = prestamo.tipo === 'prestado'
@@ -220,9 +202,3 @@ const verificarAccesoRapido = () => {
 onMounted(verificarAccesoRapido);
 onActivated(verificarAccesoRapido);
 </script>
-
-<style scoped>
-.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
-.modal-enter-from > div, .modal-leave-to > div { transform: scale(0.96) translateY(8px); transition: transform 0.2s ease; }
-</style>

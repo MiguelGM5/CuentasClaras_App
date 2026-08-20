@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { TrendingUp } from 'lucide-vue-next';
 import { animationState } from '../../../utils/animationState';
 
@@ -64,6 +64,7 @@ const props = defineProps({
 
 const showBars = ref(animationState.histo);
 const displayTotalSemana = ref(0);
+let counter = null;
 
 const ingresosPerDay = computed(() => {
     const days = [];
@@ -108,6 +109,8 @@ const animateTotal = () => {
     }
 
     animationState.histo = true;
+    if (counter) clearInterval(counter);
+
     let frame = 0;
     const duration = 1500;
     const frameRate = 1000 / 60;
@@ -116,13 +119,14 @@ const animateTotal = () => {
 
     displayTotalSemana.value = 0;
 
-    const counter = setInterval(() => {
+    counter = setInterval(() => {
         frame++;
         const progress = easeOutQuad(frame / totalFrames);
         displayTotalSemana.value = Math.round(target * progress);
 
         if (frame === totalFrames) {
             clearInterval(counter);
+            counter = null;
             displayTotalSemana.value = target;
         }
     }, frameRate);
@@ -130,6 +134,13 @@ const animateTotal = () => {
 
 onMounted(() => {
     animateTotal();
+});
+
+onUnmounted(() => {
+    if (counter) {
+        clearInterval(counter);
+        counter = null;
+    }
 });
 
 watch(totalSemanaReal, () => {

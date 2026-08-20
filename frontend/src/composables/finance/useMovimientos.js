@@ -2,17 +2,12 @@ import { ref, computed } from 'vue';
 import Swal from 'sweetalert2';
 import { API_URL } from '../../constants/api';
 import { obtenerHoy } from '../../utils/date';
+import { getAuthHeaders } from '../../utils/http';
 
 export function useMovimientos() {
     const fechaHoy = obtenerHoy();
     const movimientos = ref([]);
-    
-    const getHeaders = () => ({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-    });
 
-    // ── COMPUTED ──────────────────────────────────────────────
     const totalIngresos = computed(() => movimientos.value.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + +m.monto, 0));
     const totalGastos = computed(() => movimientos.value.filter(m => m.tipo === 'gasto').reduce((a, m) => a + +m.monto, 0));
     const saldoActual = computed(() => totalIngresos.value - totalGastos.value);
@@ -25,15 +20,13 @@ export function useMovimientos() {
         return agrupado;
     });
 
-    // ── ACCIONES ──────────────────────────────────────────────
     const cargarMovimientos = async () => {
-        const res = await fetch(`${API_URL}/api/finance/movimientos`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/api/finance/movimientos`, { headers: getAuthHeaders() });
         if (!res.ok) throw new Error('Error al cargar movimientos');
         movimientos.value = await res.json();
     };
 
     const registrarMovimiento = async (datos) => {
-        // 🔥 2. VALIDACIÓN DEL TIEMPO (DEL HOY PARA ATRÁS)
         if (datos.fecha && datos.fecha > fechaHoy) {
             Swal.fire({ title: '¡Epá!', text: 'No puedes registrar movimientos con fecha del futuro.', icon: 'warning', confirmButtonColor: '#00B4B4' });
             return false;
@@ -41,7 +34,7 @@ export function useMovimientos() {
 
         try {
             const res = await fetch(`${API_URL}/api/finance/movimientos`, {
-                method: 'POST', headers: getHeaders(), body: JSON.stringify(datos)
+                method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(datos)
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);

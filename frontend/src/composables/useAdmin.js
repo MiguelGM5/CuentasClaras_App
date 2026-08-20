@@ -1,46 +1,26 @@
 import { ref, computed, onMounted } from 'vue';
 import Swal from 'sweetalert2';
 import { API_URL } from '../constants/api';
-import { useAuth } from './auth/useAuth';
+import { getAuthHeaders } from '../utils/http';
 
-// Mapeo plan ↔ rol_id (debe coincidir con test.roles)
 const PLAN_A_ROL_ID = { basic: 2, premium: 3, superAdmin: 1 };
 const ROL_A_PLAN    = { basic: 'basic', premium: 'premium', superAdmin: 'superAdmin' };
-const { token } = useAuth();
 
 export function useAdmin() {
-
-    // ─────────────────────────────────────────
-    // STATE
-    // ─────────────────────────────────────────
     const usuarios  = ref([]);
     const prestamos = ref([]);
     const gastos    = ref([]);
     const loading   = ref(false);
     const error     = ref(null);
 
-    const getHeaders = () => {
-        const tokenReal = localStorage.getItem('token');
-        //console.log("Token que viaja al backend:", tokenReal);
-        return{
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-    };
-
-    // ─────────────────────────────────────────
-    // CARGA INICIAL
-    // ─────────────────────────────────────────
     const cargarDatos = async () => {
-        
-
         loading.value = true;
         error.value   = null;
         try {
             const [usrRes, preRes, gasRes] = await Promise.all([
-                fetch(`${API_URL}/api/admin/usuarios`,  { headers: getHeaders() }),
-                fetch(`${API_URL}/api/admin/prestamos`, { headers: getHeaders() }),
-                fetch(`${API_URL}/api/admin/gastos`,    { headers: getHeaders() }),
+                fetch(`${API_URL}/api/admin/usuarios`,  { headers: getAuthHeaders() }),
+                fetch(`${API_URL}/api/admin/prestamos`, { headers: getAuthHeaders() }),
+                fetch(`${API_URL}/api/admin/gastos`,    { headers: getAuthHeaders() }),
             ]);
 
             if (!usrRes.ok || !preRes.ok || !gasRes.ok)
@@ -106,20 +86,18 @@ export function useAdmin() {
             if (modo === 'edit') {
                 const res = await fetch(`${API_URL}/api/admin/usuarios/${datos.id}`, {
                     method:  'PUT',
-                    headers: getHeaders(),
+                    headers: getAuthHeaders(),
                     body:    JSON.stringify(payload)
                 });
                 if (!res.ok) {
                     const d = await res.json();
                     throw new Error(d.message);
                 }
-                // Actualizar estado local sin recargar todo
                 const idx = usuarios.value.findIndex(u => u.id === datos.id);
                 if (idx !== -1) usuarios.value[idx] = { ...usuarios.value[idx], ...datos };
                 Swal.fire({ title: 'Usuario actualizado', icon: 'success', confirmButtonColor: '#00B4B4', timer: 1500, showConfirmButton: false });
 
             } else {
-                // Para crear necesitamos password. Si no viene, pedirlo con Swal
                 let password = datos.password;
                 if (!password) {
                     const { value } = await Swal.fire({
@@ -138,7 +116,7 @@ export function useAdmin() {
 
                 const res  = await fetch(`${API_URL}/api/admin/usuarios`, {
                     method:  'POST',
-                    headers: getHeaders(),
+                    headers: getAuthHeaders(),
                     body:    JSON.stringify({ ...payload, password })
                 });
                 const created = await res.json();
@@ -177,7 +155,7 @@ export function useAdmin() {
         try {
             const res = await fetch(`${API_URL}/api/admin/usuarios/${user.id}`, {
                 method:  'DELETE',
-                headers: getHeaders()
+                headers: getAuthHeaders()
             });
             if (!res.ok) throw new Error('No se pudo eliminar');
             usuarios.value = usuarios.value.filter(u => u.id !== user.id);
@@ -187,14 +165,13 @@ export function useAdmin() {
         }
     };
 
-    /** Toggle local inmediato + sincroniza con la BD */
     const toggleStatusDB = async (user) => {
         const nuevoStatus = user.status === 1 ? 0 : 1;
         user.status = nuevoStatus;
         try {
             await fetch(`${API_URL}/api/admin/usuarios/${user.id}`, {
                 method:  'PUT',
-                headers: getHeaders(),
+                headers: getAuthHeaders(),
                 body:    JSON.stringify({
                     nombre:          user.nombre,
                     apellidoPaterno: user.apellidoPaterno,

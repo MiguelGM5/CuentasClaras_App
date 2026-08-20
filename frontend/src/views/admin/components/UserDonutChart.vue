@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { ArrowRight } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -15,6 +15,7 @@ const displayFree = ref(0);
 const displayPremium = ref(0);
 
 let yaAnimadoUserDonut = false;
+let counter = null;
 
 const animarDona = () => {
     if (!props.total) return;
@@ -28,6 +29,8 @@ const animarDona = () => {
     }
 
     yaAnimadoUserDonut = true;
+    if (counter) clearInterval(counter);
+
     let frame = 0;
     const duration = 1500;
     const frameRate = 1000 / 60;
@@ -36,7 +39,7 @@ const animarDona = () => {
 
     fillProgress.value = 0;
 
-    const counter = setInterval(() => {
+    counter = setInterval(() => {
         frame++;
         const progress = easeOutQuad(frame / totalFrames);
         
@@ -47,6 +50,7 @@ const animarDona = () => {
 
         if (frame === totalFrames) {
             clearInterval(counter);
+            counter = null;
             fillProgress.value = 1;
             displayTotal.value = props.total;
             displayFree.value = props.free;
@@ -57,6 +61,13 @@ const animarDona = () => {
 
 onMounted(() => {
     setTimeout(animarDona, 200);
+});
+
+onUnmounted(() => {
+    if (counter) {
+        clearInterval(counter);
+        counter = null;
+    }
 });
 
 watch(() => props.total, () => {

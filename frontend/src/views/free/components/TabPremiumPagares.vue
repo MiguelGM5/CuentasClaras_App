@@ -108,114 +108,111 @@
             </template>
         </BaseDataTable>
 
-        <Transition name="modal">
-            <div v-if="modalPagare"
-                class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-                @mousedown.self="modalPagare = false">
-                <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
+        <BaseModal
+            v-model="modalPagare"
+            maxWidth="max-w-2xl"
+        >
+            <template #title>
+                <h3 class="font-black text-xl text-slate-800 flex items-center gap-2">
+                    <span class="bg-gradient-to-r from-amber-400 to-amber-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Premium</span>
+                    Emitir Pagaré
+                </h3>
+            </template>
+            <template #subtitle>
+                <p class="text-xs text-slate-400 mt-0.5">Captura los datos y la firma autógrafa del deudor</p>
+            </template>
 
-                    <div class="p-6 border-b border-slate-100 flex justify-between items-start flex-shrink-0">
-                        <div>
-                            <h3 class="font-black text-xl text-slate-800 flex items-center gap-2">
-                                <span class="bg-gradient-to-r from-amber-400 to-amber-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Premium</span>
-                                Emitir Pagaré
-                            </h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Captura los datos y la firma autógrafa del deudor</p>
-                        </div>
-                        <button @click="modalPagare = false"
-                            class="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors">
-                            <X :size="17" />
-                        </button>
+            <div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                    <div class="sm:col-span-2">
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Nombre del Deudor (Prestatario) *</label>
+                        <input v-model="formPagare.deudor" type="text" placeholder="Nombre completo según identificación"
+                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white transition-colors" />
                     </div>
-
-                    <div class="p-6 overflow-y-auto">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                            <div class="sm:col-span-2">
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Nombre del Deudor (Prestatario) *</label>
-                                <input v-model="formPagare.deudor" type="text" placeholder="Nombre completo según identificación"
-                                    class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white transition-colors" />
-                            </div>
-                            
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Capital a prestar (MXN) *</label>
-                                <input v-model="formPagare.monto_solicitado" type="number" min="1" placeholder="0.00"
-                                    class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white font-bold transition-colors" />
-                            </div>
-                            
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha de Vencimiento *</label>
-                                <input v-model="formPagare.fecha_vencimiento" type="date" :min="fechaHoy"
-                                    class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white transition-colors" />
-                            </div>
-                            
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Interés Moratorio % (Mensual)</label>
-                                <input v-model="formPagare.interes_moratorio" type="number" min="0" placeholder="Ej. 10"
-                                    class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white transition-colors" />
-                            </div>
-                            
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Folio (Opcional)</label>
-                                <input v-model="formPagare.folio" type="text" placeholder="Ej. PAG-001"
-                                    class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white transition-colors uppercase" />
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4">
-                            <div class="flex justify-between items-center mb-3">
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Firma Autógrafa del Deudor *</label>
-                                <button @click="limpiarFirma" class="text-[10px] bg-white border border-slate-200 text-slate-500 font-bold px-2 py-1 rounded shadow-sm hover:text-red-500 transition-colors">
-                                    Limpiar recuadro
-                                </button>
-                            </div>
-                            <div class="border-2 border-dashed border-slate-300 rounded-xl overflow-hidden bg-white cursor-crosshair shadow-inner relative">
-                                <div class="absolute bottom-6 left-10 right-10 border-b-2 border-slate-200 pointer-events-none"></div>
-                                <canvas 
-                                    ref="canvasFirma" 
-                                    class="w-full h-[180px] touch-none relative z-10"
-                                    @mousedown="empezarDibujo"
-                                    @mousemove="dibujar"
-                                    @mouseup="terminarDibujo"
-                                    @mouseleave="terminarDibujo"
-                                    @touchstart.prevent="empezarDibujo"
-                                    @touchmove.prevent="dibujar"
-                                    @touchend.prevent="terminarDibujo"
-                                ></canvas>
-                            </div>
-                            <p class="text-[10px] text-slate-400 text-center mt-2 font-medium">
-                                El deudor debe firmar usando el mouse o su dedo sobre la pantalla.
-                            </p>
-                        </div>
+                    
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Capital a prestar (MXN) *</label>
+                        <input v-model="formPagare.monto_solicitado" type="number" min="1" placeholder="0.00"
+                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white font-bold transition-colors" />
                     </div>
-
-                    <div class="p-6 border-t border-slate-100 flex gap-3 flex-shrink-0 bg-white rounded-b-3xl">
-                        <button @click="modalPagare = false"
-                            class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">
-                            Cancelar
-                        </button>
-                        <button 
-                            @click="guardarNuevoPagare"
-                            :disabled="guardando"
-                            class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition-colors"
-                        >
-                            <Check :size="15" /> {{ guardando ? 'Generando...' : 'Generar Documento' }}
-                        </button>
+                    
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha de Vencimiento *</label>
+                        <input v-model="formPagare.fecha_vencimiento" type="date" :min="fechaHoy"
+                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white transition-colors" />
+                    </div>
+                    
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Interés Moratorio % (Mensual)</label>
+                        <input v-model="formPagare.interes_moratorio" type="number" min="0" placeholder="Ej. 10"
+                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white transition-colors" />
+                    </div>
+                    
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Folio (Opcional)</label>
+                        <input v-model="formPagare.folio" type="text" placeholder="Ej. PAG-001"
+                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-500 bg-slate-50 focus:bg-white transition-colors uppercase" />
                     </div>
                 </div>
+
+                <div class="border-t border-slate-100 pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                            Firma del Deudor (En Pantalla) *
+                        </label>
+                        <button 
+                            @click="limpiarFirma" 
+                            class="text-xs text-amber-600 hover:text-amber-700 font-bold hover:underline"
+                        >
+                            Borrar y Limpiar
+                        </button>
+                    </div>
+
+                    <div class="border-2 border-dashed border-amber-300 rounded-2xl bg-amber-50/20 overflow-hidden relative touch-none">
+                        <canvas 
+                            ref="canvasFirma" 
+                            class="w-full h-36 bg-transparent cursor-crosshair block"
+                            @mousedown="empezarDibujo"
+                            @mousemove="dibujar"
+                            @mouseup="terminarDibujo"
+                            @mouseleave="terminarDibujo"
+                            @touchstart.prevent="empezarDibujo"
+                            @touchmove.prevent="dibujar"
+                            @touchend.prevent="terminarDibujo"
+                        ></canvas>
+                    </div>
+                    <p class="text-[10px] text-slate-400 text-center mt-2 font-medium">
+                        El deudor debe firmar usando el mouse o su dedo sobre la pantalla.
+                    </p>
+                </div>
             </div>
-        </Transition>
+
+            <template #footer>
+                <div class="flex gap-3">
+                    <button @click="modalPagare = false"
+                        class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">
+                        Cancelar
+                    </button>
+                    <button 
+                        @click="guardarNuevoPagare"
+                        :disabled="guardando"
+                        class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition-colors"
+                    >
+                        <Check :size="15" /> {{ guardando ? 'Generando...' : 'Generar Documento' }}
+                    </button>
+                </div>
+            </template>
+        </BaseModal>
 
     </div>
 </template>
 
 <script setup>
-import { Plus, FileSignature, AlertCircle, CheckCircle2, DollarSign, Download, X, Check } from 'lucide-vue-next';
+import { Plus, FileSignature, AlertCircle, CheckCircle2, Download, Check } from 'lucide-vue-next';
 import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
-
-// Importamos los dos composables
+import BaseModal from '../../../components/common/BaseModal.vue';
 import { usePagares } from '../../../composables/finance/usePagare.js';
 
-// Props y Emits
 const props = defineProps({ pagares: { type: Array, required: true } });
 const emit = defineEmits(['pagareCreado']);
 
@@ -228,7 +225,6 @@ const columnas = [
     { key: 'acciones', label: 'Acciones' }
 ];
 
-// Inicializamos todo el motor lógico y destructuramos las variables para el HTML
 const { 
     fechaHoy, modalPagare, formPagare, canvasFirma, guardando, pagaresAlCorriente, pagaresAtrasados, totalProtegido, 
     abrirCrear, empezarDibujo, dibujar, terminarDibujo, limpiarFirma, guardarNuevoPagare,

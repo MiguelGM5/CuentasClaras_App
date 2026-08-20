@@ -4,9 +4,10 @@ import { jsPDF } from "jspdf";
 import { API_URL } from '../../constants/api';
 import { usePerfil } from '../usePerfil';
 import { obtenerHoy } from '../../utils/date';
+import { getAuthHeaders } from '../../utils/http';
+import { formatearDinero, formatearFechaFormatoLargo } from '../../utils/format';
 
 export function usePagares(props, emit) {
-    // ── ESTADO ──────────────────────────────────────────────
     const fechaHoy = obtenerHoy();
     const pagares = ref([]);
     const modalPagare = ref(false);
@@ -17,16 +18,15 @@ export function usePagares(props, emit) {
     const { nombreCompleto } = usePerfil();
     
     const pagaresAlCorriente = computed(() => {
-        if (!props.pagares) return 0; // Si no hay datos, devolvemos 0
+        if (!props?.pagares) return 0;
         return props.pagares.filter(p => {
-            // Si viene nulo o vacío, asumimos 'al corriente'. Le quitamos espacios y lo hacemos minúscula.
             const estadoSeguro = (p.estado || 'al corriente').trim().toLowerCase();
             return estadoSeguro === 'al corriente';
         }).length;
     });
 
     const pagaresAtrasados = computed(() => {
-        if (!props.pagares) return 0;
+        if (!props?.pagares) return 0;
         return props.pagares.filter(p => {
             const estadoSeguro = (p.estado || '').trim().toLowerCase();
             return estadoSeguro === 'atrasado';
@@ -34,22 +34,16 @@ export function usePagares(props, emit) {
     });
 
     const totalProtegido = computed(() => {
-        if (!props.pagares) return 0;
+        if (!props?.pagares) return 0;
         return props.pagares.filter(p => {
             const estadoSeguro = (p.estado || '').trim().toLowerCase();
-            return estadoSeguro !== 'liquidado'; // Suma todos los que NO estén liquidados
+            return estadoSeguro !== 'liquidado';
         }).reduce((acc, p) => acc + Number(p.monto_solicitado || 0), 0);
-    });
-
-    // ── CONFIGURACIÓN API ───────────────────────────────────
-    const getHeaders = () => ({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
     });
 
     const cargarPagares = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/finance/pagares`, { headers: getHeaders() });
+            const res = await fetch(`${API_URL}/api/finance/pagares`, { headers: getAuthHeaders() });
             if (!res.ok) throw new Error('Error al cargar pagarés');
             pagares.value = await res.json();
         } catch (err) { console.error(err); }
@@ -59,13 +53,12 @@ export function usePagares(props, emit) {
         try {
             const res = await fetch(`${API_URL}/api/finance/pagares/${id}/estado`, {
                 method: 'PUT',
-                headers: getHeaders(),
+                headers: getAuthHeaders(),
                 body: JSON.stringify({ estado: nuevoEstado })
             });
 
             if (!res.ok) throw new Error('Fallo al actualizar');
 
-            // Actualizamos la tabla visualmente en Vue (Mutamos el prop)
             const index = props.pagares.findIndex(p => p.id === id);
             if (index !== -1) {
                 props.pagares[index].estado = nuevoEstado;
@@ -155,7 +148,7 @@ export function usePagares(props, emit) {
         try {
             const response = await fetch(`${API_URL}/api/finance/pagares`, {
                 method: 'POST', 
-                headers: getHeaders(), 
+                headers: getAuthHeaders(), 
                 body: JSON.stringify(formPagare.value)
             });
 
@@ -180,15 +173,6 @@ export function usePagares(props, emit) {
         } finally {
             setTimeout(() => { guardando.value = false; }, 600);
         }
-    };
-
-    // ── LÓGICA PDF ───────────────────────────────────────────
-    const formatearDinero = (m) => isNaN(m) ? "0.00" : Number(m).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    
-    const formatearFechaFormatoLargo = (fechaStr) => {
-        if (!fechaStr) return '';
-        const [year, month, day] = fechaStr.split('T')[0].split('-');
-        return new Date(year, month - 1, day).toLocaleDateString("es-MX", { year: 'numeric', month: 'long', day: 'numeric' });
     };
 
     const descargarPDF = (pagare) => {

@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { ArrowRight } from 'lucide-vue-next';
 import { animationState } from '../../../utils/animationState';
 
@@ -57,10 +57,9 @@ const props = defineProps({
     colores: { type: Object, required: true }
 });
 
-// --- MOTOR DE ORDENAMIENTO Y ANIMACIÓN ---
 const fillProgress = ref(animationState.donut ? 1 : 0);
 const displayTotal = ref(props.total || 0);
-const datosAnimados = ref({});
+let counter = null;
 
 const sortedDatos = computed(() => {
     return Object.entries(props.datos).sort((a, b) => b[1] - a[1]);
@@ -80,6 +79,8 @@ const animarDona = () => {
     }
 
     animationState.donut = true;
+    if (counter) clearInterval(counter);
+
     let frame = 0;
     const duration = 1500;
     const frameRate = 1000 / 60;
@@ -88,7 +89,7 @@ const animarDona = () => {
 
     fillProgress.value = 0;
     
-    const counter = setInterval(() => {
+    counter = setInterval(() => {
         frame++;
         const progress = easeOutQuad(frame / totalFrames);
         fillProgress.value = progress;
@@ -96,6 +97,7 @@ const animarDona = () => {
 
         if (frame === totalFrames) {
             clearInterval(counter);
+            counter = null;
             fillProgress.value = 1;
             displayTotal.value = props.total;
         }
@@ -103,6 +105,14 @@ const animarDona = () => {
 };
 
 onMounted(() => setTimeout(animarDona, 200));
+
+onUnmounted(() => {
+    if (counter) {
+        clearInterval(counter);
+        counter = null;
+    }
+});
+
 watch(() => props.total, () => {
     if (animationState.donut) {
         fillProgress.value = 1;

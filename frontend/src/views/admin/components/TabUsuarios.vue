@@ -125,7 +125,7 @@ const cardsUsuarios = computed(() => [
     {
         id: 4,
         label: "Usuarios Activos",
-        value: props.cntFree,
+        value: props.cntActivos,
         icon: UserRoundCheck,
         colorTexto: "text-emerald-600",
         colorBg: "bg-emerald-100",

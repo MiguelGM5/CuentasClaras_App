@@ -6,10 +6,11 @@ import {
     Receipt, Calendar, CreditCard, Zap, Shield, Loader2 
 } from 'lucide-vue-next';
 import { API_URL } from '../../../constants/api';
+import { getAuthHeaders } from '../../../utils/http';
 
 const props = defineProps({
     perfil:         { type: Object, required: true },
-    historialPagos: { type: Array,  default: () => [] }, // La dejamos por compatibilidad, pero ya no la usamos
+    historialPagos: { type: Array,  default: () => [] },
     esPremium:      { type: Boolean, default: false }
 });
 
@@ -21,11 +22,9 @@ const route = useRoute();
 const router = useRouter();
 const mostrarToastExito = ref(false);
 
-// ── VARIABLES PARA EL HISTORIAL REAL DE STRIPE ──
 const historialPagosReal = ref([]);
 const cargandoHistorial = ref(true);
 
-// ──FUNCIÓN QUE TRAE LAS FACTURAS DESDE EL BACKEND ──
 const cargarHistorialPagos = async () => {
     try {
         const token = localStorage.getItem('token');
@@ -34,7 +33,6 @@ const cargarHistorialPagos = async () => {
             return;
         }
 
-        // Sacamos el ID del JWT
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const payloadDecodificado = JSON.parse(window.atob(base64));
@@ -43,9 +41,7 @@ const cargarHistorialPagos = async () => {
         if (!userId) return;
 
         const response = await fetch(`${API_URL}/api/pagos/historial-pagos/${userId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: getAuthHeaders()
         });
 
         if (response.ok) {
@@ -63,19 +59,14 @@ const handleCancelar = async () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        // Extraemos el ID del JWT
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const payloadDecodificado = JSON.parse(window.atob(base64));
         const userIdDesdeToken = payloadDecodificado.id || payloadDecodificado.userId || payloadDecodificado.id_usuario;
 
-        // Le pegamos al nuevo endpoint de cancelación
         const response = await fetch(`${API_URL}/api/pagos/cancelar-suscripcion`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ userId: userIdDesdeToken })
         });
 
@@ -84,17 +75,13 @@ const handleCancelar = async () => {
         const data = await response.json();
 
         if (data.success) {
-            // 1. Actualizamos el carnet del navegador (localStorage)
             const userLocal = JSON.parse(localStorage.getItem('user') || '{}');
             userLocal.rol = data.rol;
             userLocal.nombre_rol = data.rol;
             userLocal.rol_Id = data.rol_Id;
             localStorage.setItem('user', JSON.stringify(userLocal));
 
-            // 2. Cerramos el modal
             confirmarCancelacion.value = false;
-
-            // 3. Hacemos un reload para que se aplique la vista "Gratuita"
             window.location.reload();
         }
 
@@ -105,10 +92,8 @@ const handleCancelar = async () => {
 };
 
 onMounted(() => {
-    // 1. Disparamos la búsqueda de facturas reales
     cargarHistorialPagos();
 
-    // 2. Lógica del Toast de éxito
     if (route.query.pago === 'exito') {
         mostrarToastExito.value = true;
         setTimeout(() => {
@@ -118,7 +103,6 @@ onMounted(() => {
     }
 });
 
-// ── FUNCIÓN DE PAGO ─────────────────────────────────
 const irAPagar = async () => {
     cargandoPago.value = true;
     try {
@@ -142,10 +126,7 @@ const irAPagar = async () => {
 
         const response = await fetch(`${API_URL}/api/pagos/crear-checkout`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ 
                 userId: userIdDesdeToken 
             }) 

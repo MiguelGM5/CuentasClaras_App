@@ -40,18 +40,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import { Target } from 'lucide-vue-next';
 import { animationState } from '../../../utils/animationState';
+import { formatearDinero } from '../../../utils/format';
 
 const props = defineProps({
     metas: { type: Array, required: true }
 });
-
-const formatearDinero = (monto) => {
-    if (isNaN(monto) || monto === null) return "0.00";
-    return Number(monto).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-};
 
 const topMetas = computed(() => (props.metas || []).slice(0, 3));
 const displayMetas = ref([]);
@@ -107,10 +103,18 @@ const animarMetas = () => {
 
         if (frame === totalFrames) {
             clearInterval(motorAnimacion);
+            motorAnimacion = null;
             fijarMetasDirecto();
         }
     }, frameRate);
 };
+
+onUnmounted(() => {
+    if (motorAnimacion) {
+        clearInterval(motorAnimacion);
+        motorAnimacion = null;
+    }
+});
 
 watch(() => props.metas, () => {
     if (animationState.metasBar) {

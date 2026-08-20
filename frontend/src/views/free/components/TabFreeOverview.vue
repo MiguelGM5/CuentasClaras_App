@@ -86,7 +86,6 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
 import { Target, CreditCard, Plus, ArrowDownLeft, ArrowUpRight, DollarSign } from 'lucide-vue-next';
 import GastosDonutChart from './GastosDonutChart.vue';
 import MetasBarChart from './MetasBarChart.vue';

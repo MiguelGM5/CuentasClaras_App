@@ -17,7 +17,6 @@ exports.manejarWebhook = async (req, res) => {
     switch (event.type) {
         case 'checkout.session.completed':
             const session = event.data.object;
-            //Usamos el nombre exacto del modelo
             const userId = session.metadata?.userId || null;
             const customerId = session.customer || null;
             const subscriptionId = session.subscription || null;
@@ -29,9 +28,7 @@ exports.manejarWebhook = async (req, res) => {
 
         case 'customer.subscription.deleted':
             const subscription = event.data.object;
-            //Usamos el nombre exacto del modelo
             await User.cancelarSuscripcionPro(subscription.id);
-            console.log(`Suscripción ${subscription.id} cancelada. Usuario degradado.`);
             break;
 
         default:

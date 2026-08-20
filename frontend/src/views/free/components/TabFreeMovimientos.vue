@@ -103,90 +103,77 @@
             <template #fecha="{ row }"><span class="text-xs text-slate-400">{{ row.fecha }}</span></template>
         </BaseDataTable>
 
-        <!-- ═══════════════════════════════════════════════════════ -->
-        <!-- MODAL INTERNO · REGISTRAR MOVIMIENTO                    -->
-        <!-- ═══════════════════════════════════════════════════════ -->
-        <Transition name="modal">
-            <div v-if="modalMovimiento"
-                class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50"
-                @mousedown.self="modalMovimiento = false">
-                <div class="bg-white rounded-3xl w-[95%] sm:max-w-md max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl">
+        <!-- MODAL · REGISTRAR MOVIMIENTO -->
+        <BaseModal 
+            v-model="modalMovimiento"
+            title="Registrar Movimiento"
+            subtitle="Registra un ingreso o gasto en tu cuenta"
+        >
+            <div class="flex gap-3 mb-5">
+                <button v-for="t in ['ingreso', 'gasto']" :key="t" @click="formMovimiento.tipo = t" :class="[
+                    'flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border',
+                    formMovimiento.tipo === t
+                        ? t === 'ingreso' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'bg-orange-500 text-white border-orange-500 shadow-md'
+                        : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                ]">
+                    <component :is="t === 'ingreso' ? ArrowDownLeft : ArrowUpRight" :size="16" />
+                    {{ t === 'ingreso' ? 'Ingreso' : 'Gasto' }}
+                </button>
+            </div>
 
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="font-black text-xl text-slate-800">Registrar Movimiento</h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Registra un ingreso o gasto en tu cuenta</p>
-                        </div>
-                        <button @click="modalMovimiento = false"
-                            class="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors">
-                            <X :size="17" />
-                        </button>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Categoría *</label>
+                    <select v-model="formMovimiento.categoria"
+                        class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors">
+                        <option value="" disabled>Selecciona una categoría</option>
+                        <option v-for="cat in categoriasActuales" :key="cat" :value="cat">{{ cat }}</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Descripción *</label>
+                    <input v-model="formMovimiento.descripcion" type="text" placeholder="Ej. Quincena, Supermercado..."
+                        class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Monto (MXN) *</label>
+                        <input v-model="formMovimiento.monto" type="number" min="1" placeholder="0.00"
+                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                     </div>
-
-                    <div class="flex gap-3 mb-5">
-                        <button v-for="t in ['ingreso', 'gasto']" :key="t" @click="formMovimiento.tipo = t" :class="[
-                            'flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border',
-                            formMovimiento.tipo === t
-                                ? t === 'ingreso' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'bg-orange-500 text-white border-orange-500 shadow-md'
-                                : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
-                        ]">
-                            <component :is="t === 'ingreso' ? ArrowDownLeft : ArrowUpRight" :size="16" />
-                            {{ t === 'ingreso' ? 'Ingreso' : 'Gasto' }}
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Categoría *</label>
-                            <select v-model="formMovimiento.categoria"
-                                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors">
-                                <option value="" disabled>Selecciona una categoría</option>
-                                <option v-for="cat in categoriasActuales" :key="cat" :value="cat">{{ cat }}</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Descripción *</label>
-                            <input v-model="formMovimiento.descripcion" type="text" placeholder="Ej. Quincena, Supermercado..."
-                                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Monto (MXN) *</label>
-                                <input v-model="formMovimiento.monto" type="number" min="1" placeholder="0.00"
-                                    class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                            </div>
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha *</label>
-                                <!-- CALENDARIO BLOQUEADO AL HOY COMO MÁXIMO -->
-                                <input v-model="formMovimiento.fecha" type="date" :max="fechaHoy"
-                                    class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 mt-6">
-                        <button @click="modalMovimiento = false"
-                            class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
-                        <button @click="guardarNuevaMovimiento"
-                            :disabled="guardando"
-                            :class="['flex-1 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed', formMovimiento.tipo === 'ingreso' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600']">
-                            <Check :size="15" /> {{ guardando ? 'Guardando...' : 'Guardar' }}
-                        </button>
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha *</label>
+                        <input v-model="formMovimiento.fecha" type="date" :max="fechaHoy"
+                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                     </div>
                 </div>
             </div>
-        </Transition>
+
+            <template #footer>
+                <div class="flex gap-3">
+                    <button @click="modalMovimiento = false"
+                        class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
+                    <button @click="guardarNuevaMovimiento"
+                        :disabled="guardando"
+                        :class="['flex-1 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed', formMovimiento.tipo === 'ingreso' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600']">
+                        <Check :size="15" /> {{ guardando ? 'Guardando...' : 'Guardar' }}
+                    </button>
+                </div>
+            </template>
+        </BaseModal>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onActivated } from 'vue';
-import { Plus, ArrowDownLeft, ArrowUpRight, X, Check, TrendingDown, Flame, TrendingUp, AlertTriangle, Scale } from 'lucide-vue-next';
+import { Plus, ArrowDownLeft, ArrowUpRight, Check, TrendingDown, Flame, TrendingUp, AlertTriangle, Scale } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
 import BaseDataTable from '../../../components/dashboard/BaseDataTable.vue';
+import BaseModal from '../../../components/common/BaseModal.vue';
 import { obtenerHoy } from '../../../utils/date.js';
+import { formatearDinero } from '../../../utils/format.js';
 
 const props = defineProps({ 
     movimientos: Array,
@@ -203,12 +190,6 @@ const columnas = [
     { key: 'tipo', label: 'Tipo' }, { key: 'categoria', label: 'Categoría' },
     { key: 'descripcion', label: 'Descripción' }, { key: 'monto', label: 'Monto' }, { key: 'fecha', label: 'Fecha' }
 ];
-
-const formatearDinero = (monto) => {
-    return Number(monto).toLocaleString('en-US', {
-        minimumFractionDigits: 2, maximumFractionDigits: 2
-    });
-};
 
 const topCategorias = computed(() => {
     if (!props.movimientos || props.movimientos.length === 0) return [];

@@ -89,154 +89,127 @@
             <button @click="abrirCrear" class="bg-[#00B4B4] text-white font-bold px-6 py-3 rounded-xl shadow-md">Crear mi primera Meta</button>
         </div>
 
-        <Transition name="modal">
-            <div v-if="modalCrear" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50" @mousedown.self="modalCrear = false">
-                <div class="bg-white rounded-3xl w-[95%] sm:max-w-md max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="font-black text-xl text-slate-800">Nueva Meta de Ahorro</h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Define tu objetivo financiero</p>
-                        </div>
-                        <button @click="modalCrear = false" class="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors"><X :size="17" /></button>
+        <!-- MODAL CREAR -->
+        <BaseModal
+            v-model="modalCrear"
+            title="Nueva Meta de Ahorro"
+            subtitle="Define tu objetivo financiero"
+        >
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Nombre de la Meta *</label>
+                    <input v-model="formCrear.titulo" type="text" placeholder="Ej. Fondo de Emergencia..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Objetivo (MXN) *</label>
+                        <input v-model="formCrear.monto_objetivo" type="number" min="1" placeholder="15,000" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                     </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Nombre de la Meta *</label>
-                            <input v-model="formCrear.titulo" type="text" placeholder="Ej. Fondo de Emergencia..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Objetivo (MXN) *</label>
-                                <input v-model="formCrear.monto_objetivo" type="number" min="1" placeholder="15,000" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                            </div>
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Ya ahorrado</label>
-                                <input v-model="formCrear.monto_actual" type="number" min="0" placeholder="0" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha Límite</label>
-                            <input v-model="formCrear.fecha_limite" type="date" :min="fechaHoy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 mt-6">
-                        <button @click="modalCrear = false" class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
-                        <button @click="guardarNuevaMeta" :disabled="guardando" class="flex-1 bg-[#00B4B4] hover:bg-[#009291] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-colors">
-                            <Check :size="15" /> {{ guardando ? 'Creando...' : 'Crear Meta' }}
-                        </button>
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Ya ahorrado</label>
+                        <input v-model="formCrear.monto_actual" type="number" min="0" placeholder="0" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                     </div>
                 </div>
-            </div>
-        </Transition>
-
-        <Transition name="modal">
-            <div v-if="modalEditar" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50" @mousedown.self="modalEditar = false">
-                <div class="bg-white rounded-3xl w-[95%] sm:max-w-md max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="font-black text-xl text-slate-800">Editar Meta</h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Modifica los detalles de tu objetivo</p>
-                        </div>
-                        <button @click="modalEditar = false" class="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors"><X :size="17" /></button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Título *</label>
-                            <input v-model="formEditar.titulo" type="text" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-colors" />
-                        </div>
-
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Objetivo (MXN) *</label>
-                            <input v-model="formEditar.monto_objetivo" type="number" min="1" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-colors" />
-                        </div>
-
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha Límite</label>
-                            <input v-model="formEditar.fecha_limite" type="date" :min="fechaHoy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-colors" />
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 mt-6">
-                        <button @click="modalEditar = false" class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
-                        <button @click="guardarEdicion" :disabled="guardando" class="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-200 transition-colors">
-                            <Check :size="15" /> {{ guardando ? 'Guardando...' : 'Guardar Cambios' }}
-                        </button>
-                    </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha Límite</label>
+                    <input v-model="formCrear.fecha_limite" type="date" :min="fechaHoy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#00B4B4] bg-slate-50 focus:bg-white transition-colors" />
                 </div>
             </div>
-        </Transition>
 
-        <Transition name="modal">
-            <div v-if="modalAbonar" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50" @mousedown.self="modalAbonar = false">
-                <div class="bg-white rounded-3xl w-[95%] sm:max-w-md max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="font-black text-xl text-slate-800">Abonar a tu Meta</h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Súmale saldo a "{{ formAbonar.titulo }}"</p>
-                        </div>
-                        <button @click="modalAbonar = false" class="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors"><X :size="17" /></button>
-                    </div>
+            <template #footer>
+                <div class="flex gap-3">
+                    <button @click="modalCrear = false" class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
+                    <button @click="guardarNuevaMeta" :disabled="guardando" class="flex-1 bg-[#00B4B4] hover:bg-[#009291] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-teal-100 transition-colors">
+                        <Check :size="15" /> {{ guardando ? 'Creando...' : 'Crear Meta' }}
+                    </button>
+                </div>
+            </template>
+        </BaseModal>
 
-                    <div class="bg-slate-50 p-4 rounded-xl mb-5 border border-slate-100 flex justify-between items-center">
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ya ahorrado</p>
-                            <p class="text-sm font-bold text-slate-700">${{ formatearDinero(formAbonar.monto_actual) }}</p>
-                        </div>
-                        <div class="h-8 w-px bg-slate-200"></div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Faltan</p>
-                            <p class="text-sm font-bold text-emerald-600">${{ formatearDinero(Math.max(formAbonar.monto_objetivo - formAbonar.monto_actual, 0)) }}</p>
-                        </div>
-                    </div>
+        <!-- MODAL EDITAR -->
+        <BaseModal
+            v-model="modalEditar"
+            title="Editar Meta"
+            subtitle="Modifica los detalles de tu objetivo"
+        >
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Título *</label>
+                    <input v-model="formEditar.titulo" type="text" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-colors" />
+                </div>
 
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Monto a sumar (MXN) *</label>
-                            <input v-model="formAbonar.abono" type="number" min="1" placeholder="Ej. 500" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 bg-slate-50 focus:bg-white transition-colors font-semibold" />
-                        </div>
-                    </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Objetivo (MXN) *</label>
+                    <input v-model="formEditar.monto_objetivo" type="number" min="1" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-colors" />
+                </div>
 
-                    <div class="flex gap-3 mt-6">
-                        <button @click="modalAbonar = false" class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
-                        <button @click="guardarAbono" :disabled="guardando" class="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-200 transition-colors">
-                            <DollarSign :size="15" /> {{ guardando ? 'Sumando...' : 'Sumar Ahorro' }}
-                        </button>
-                    </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Fecha Límite</label>
+                    <input v-model="formEditar.fecha_limite" type="date" :min="fechaHoy" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-colors" />
                 </div>
             </div>
-        </Transition>
+
+            <template #footer>
+                <div class="flex gap-3">
+                    <button @click="modalEditar = false" class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
+                    <button @click="guardarEdicion" :disabled="guardando" class="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-200 transition-colors">
+                        <Check :size="15" /> {{ guardando ? 'Guardando...' : 'Guardar Cambios' }}
+                    </button>
+                </div>
+            </template>
+        </BaseModal>
+
+        <!-- MODAL ABONAR -->
+        <BaseModal
+            v-model="modalAbonar"
+            title="Abonar a tu Meta"
+            :subtitle="'Súmale saldo a ' + formAbonar.titulo"
+        >
+            <div class="bg-slate-50 p-4 rounded-xl mb-5 border border-slate-100 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ya ahorrado</p>
+                    <p class="text-sm font-bold text-slate-700">${{ formatearDinero(formAbonar.monto_actual) }}</p>
+                </div>
+                <div class="h-8 w-px bg-slate-200"></div>
+                <div class="text-right">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Faltan</p>
+                    <p class="text-sm font-bold text-emerald-600">${{ formatearDinero(Math.max(formAbonar.monto_objetivo - formAbonar.monto_actual, 0)) }}</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Monto a sumar (MXN) *</label>
+                    <input v-model="formAbonar.abono" type="number" min="1" placeholder="Ej. 500" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 bg-slate-50 focus:bg-white transition-colors font-semibold" />
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="flex gap-3">
+                    <button @click="modalAbonar = false" class="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm transition-colors">Cancelar</button>
+                    <button @click="guardarAbono" :disabled="guardando" class="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-200 transition-colors">
+                        <DollarSign :size="15" /> {{ guardando ? 'Sumando...' : 'Sumar Ahorro' }}
+                    </button>
+                </div>
+            </template>
+        </BaseModal>
     </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onActivated } from 'vue';
-import { Plus, Trash2, Edit2, Target, Calendar, DollarSign, X, Check } from 'lucide-vue-next';
+import { ref, watch, onMounted, onUnmounted, onActivated } from 'vue';
+import { Plus, Trash2, Edit2, Target, Calendar, DollarSign, Check } from 'lucide-vue-next';
 import { obtenerHoy } from '../../../utils/date';
 import Swal from 'sweetalert2';
+import BaseModal from '../../../components/common/BaseModal.vue';
 import { animationState } from '../../../utils/animationState';
+import { formatearDinero, formatearFecha } from '../../../utils/format';
 
 const props = defineProps({ metas: { type: Array, required: true } });
 const emit = defineEmits(['crearMeta', 'abonarMeta', 'editarMeta', 'eliminarMeta']);
 
 const fechaHoy = obtenerHoy();
 const guardando = ref(false);
-
-// ──  HELPER DEL FORMATO FINANCIERO ──────────────────────────────
-const formatearDinero = (monto) => {
-    if (isNaN(monto) || monto === null) return "0.00";
-    // Forzamos los 2 decimales y clavamos la coma separadora de miles a la fuerza con Regex
-    return Number(monto).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-};
-
-const formatearFecha = (fechaStr) => {
-    if (!fechaStr) return '';
-    const [year, month, day] = fechaStr.split('T')[0].split('-');
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString("es-MX", { year: 'numeric', month: 'short', day: 'numeric' });
-};
 
 const displayMetas = ref([]);
 let motorAnimacion = null;
@@ -291,10 +264,18 @@ watch(() => props.metas, () => {
 
         if (frame === totalFrames) {
             clearInterval(motorAnimacion);
+            motorAnimacion = null;
             fijarDisplayMetasDirecto();
         }
     }, frameRate);
 }, { deep: true, immediate: true });
+
+onUnmounted(() => {
+    if (motorAnimacion) {
+        clearInterval(motorAnimacion);
+        motorAnimacion = null;
+    }
+});
 
 const confirmarEliminar = (meta) => {
     Swal.fire({
@@ -326,7 +307,6 @@ const guardarNuevaMeta = async () => {
     if (!formCrear.value.titulo || !formCrear.value.monto_objetivo) {
         return Swal.fire({ icon: 'error', title: 'Campos vacíos', text: 'El nombre y el objetivo son obligatorios.'});
     }
-    // 3. VALIDACIÓN FRONTEND
     if (formCrear.value.fecha_limite && formCrear.value.fecha_limite < fechaHoy) {
         return Swal.fire({ icon: 'warning', title: 'Fecha inválida', text: 'No puedes poner un límite en el pasado.' });
     }
@@ -358,7 +338,6 @@ const guardarEdicion = async () => {
     if (!formEditar.value.titulo || !formEditar.value.monto_objetivo) {
         return Swal.fire({ icon: 'error', title: 'Campos vacíos', text: 'El nombre y el objetivo son obligatorios.'});
     }
-    //4. VALIDACIÓN FRONTEND
     if (formEditar.value.fecha_limite && formEditar.value.fecha_limite < fechaHoy) {
         return Swal.fire({ icon: 'warning', title: 'Fecha inválida', text: 'No puedes poner un límite en el pasado.' });
     }
@@ -412,9 +391,3 @@ const verificarAccesoRapido = () => {
 onMounted(verificarAccesoRapido);
 onActivated(verificarAccesoRapido);
 </script>
-
-<style scoped>
-.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
-.modal-enter-from > div, .modal-leave-to > div { transform: scale(0.96) translateY(8px); transition: transform 0.2s ease; }
-</style>

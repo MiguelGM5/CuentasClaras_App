@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed, defineAsyncComponent } from "vue";
+import { ref, defineAsyncComponent } from "vue";
 import { useRouter } from "vue-router";
-import { Users, CreditCard, LayoutDashboard, Receipt, Import, Pencil, Menu } from "lucide-vue-next";
+import { Users, CreditCard, LayoutDashboard, Receipt, Menu } from "lucide-vue-next";
 
 import { useAdmin } from "../../composables/useAdmin.js";
 
-//Componentes de la UI
+// Componentes de la UI
 import Sidebar from "../../components/layout/Sidebar.vue";
 import TabOverview from "./components/TabOverview.vue";
 const TabUsuarios = defineAsyncComponent(() => import("./components/TabUsuarios.vue"));

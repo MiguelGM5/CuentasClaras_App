@@ -53,21 +53,17 @@ router.get('/historial-pagos/:userId', async (req, res) => {
     }
 
     try {
-        // 1. Buscás al usuario en la DB para sacar su stripe_customer_id
-        const user = await User.findById(req.params.userId); // Ajustá según tu modelo
+        const user = await User.findById(req.params.userId);
 
         if (!user || !user.stripe_customer_id) {
-             // Si no es cliente de Stripe, devolvemos un array vacío
              return res.json([]); 
         }
 
-        // 2. Le pedís a Stripe todas las facturas (invoices) de este cliente
         const invoices = await stripe.invoices.list({
             customer: user.stripe_customer_id,
-            limit: 10, // Traemos las últimas 10
+            limit: 10,
         });
 
-        // 3. Mapeás los datos para que el frontend los reciba como los necesita
         const historialFormateado = invoices.data.map(invoice => {
             const fecha = new Date(invoice.created * 1000).toLocaleDateString('es-MX', {
                 year: 'numeric', month: 'short', day: 'numeric'
@@ -75,9 +71,9 @@ router.get('/historial-pagos/:userId', async (req, res) => {
 
             return {
                 id: invoice.id,
-                concepto: 'Suscripción Premium', // O invoice.lines.data[0].description si querés lo de Stripe
+                concepto: 'Suscripción Premium',
                 fecha: fecha,
-                monto: (invoice.amount_paid / 100).toFixed(2), // Stripe manda centavos, dividimos por 100
+                monto: (invoice.amount_paid / 100).toFixed(2),
                 estado: invoice.status === 'paid' ? 'Pagado' : 'Pendiente'
             };
         });
@@ -99,9 +95,8 @@ router.get('/perfil-actualizado/:userId', async (req, res) => {
         const user = await User.findById(req.params.userId);
         if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-        // Devolvemos estrictamente lo que el localStorage necesita actualizar
         res.json({
-            rol: user.nombre_rol, // "Premium" / "premium"
+            rol: user.nombre_rol,
             rol_Id: user.rol_Id
         });
     } catch (error) {
@@ -126,13 +121,9 @@ router.post('/cancelar-suscripcion', async (req, res) => {
             return res.status(400).json({ error: 'El usuario no tiene una suscripción activa' });
         }
 
-        // 1. Le decimos a Stripe: "Dá de baja esta suscripción AHORA MISMO"
         await stripe.subscriptions.cancel(user.stripe_subscription_id);
-
-        // 2. Le decimos a MySQL: "Bajale el rol a este pibe"
         await User.cancelarSuscripcionPro(user.stripe_subscription_id);
 
-        // 3. Buscamos los datos nuevos para devolverlos al frontend
         const userActualizado = await User.findById(userId);
 
         res.json({ 

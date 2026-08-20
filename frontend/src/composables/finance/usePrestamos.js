@@ -2,29 +2,22 @@ import { ref, computed } from 'vue';
 import Swal from 'sweetalert2';
 import { API_URL } from '../../constants/api';
 import { obtenerHoy } from '../../utils/date';
+import { getAuthHeaders } from '../../utils/http';
 
 export function usePrestamos() {
     const fechaHoy = obtenerHoy();
     const prestamos = ref([]);
-    
-    const getHeaders = () => ({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-    });
 
-    // ── COMPUTED ──────────────────────────────────────────────
     const totalPrestado = computed(() => prestamos.value.filter(p => p.tipo === 'prestado').reduce((a, p) => a + +p.monto, 0));
     const totalDeuda = computed(() => prestamos.value.filter(p => p.tipo === 'pedido' && p.estado === 'Pendiente').reduce((a, p) => a + +p.monto, 0));
 
-    // ── ACCIONES ──────────────────────────────────────────────
     const cargarPrestamos = async () => {
-        const res = await fetch(`${API_URL}/api/finance/prestamos`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/api/finance/prestamos`, { headers: getAuthHeaders() });
         if (!res.ok) throw new Error('Error al cargar préstamos');
         prestamos.value = await res.json();
     };
 
     const registrarPrestamo = async (datos) => {
-        // 2. EL CANDADO DEL BACKEND
         if (datos.fecha_pago && datos.fecha_pago < fechaHoy) {
             Swal.fire({ title: 'Fecha inválida', text: 'La fecha límite de pago debe ser a futuro.', icon: 'warning', confirmButtonColor: '#00B4B4' });
             return false;
@@ -32,7 +25,7 @@ export function usePrestamos() {
 
         try {
             const res = await fetch(`${API_URL}/api/finance/prestamos`, {
-                method: 'POST', headers: getHeaders(), body: JSON.stringify(datos)
+                method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(datos)
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -49,7 +42,7 @@ export function usePrestamos() {
     const saldarPrestamo = async (id) => {
         try {
             const res = await fetch(`${API_URL}/api/finance/prestamos/${id}/saldar`, {
-                method: 'PUT', headers: getHeaders()
+                method: 'PUT', headers: getAuthHeaders()
             });
             if (!res.ok) throw new Error('No se pudo saldar el préstamo');
             

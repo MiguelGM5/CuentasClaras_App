@@ -66,7 +66,6 @@ export function useRegister(){
             
             const datos = await respuesta.json();
             if(!respuesta.ok){
-                //const errorData = await respuesta.json();
                 return Swal.fire({
                     title: datos.title,
                     text: datos.text,

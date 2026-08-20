@@ -16,6 +16,4 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-//console.log('Conexión con TiDB preparada');
-
 module.exports = pool;

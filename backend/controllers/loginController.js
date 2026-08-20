@@ -1,6 +1,5 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
-const { text } = require('body-parser');
 const jwt = require('jsonwebtoken');
 
 const loginController = {

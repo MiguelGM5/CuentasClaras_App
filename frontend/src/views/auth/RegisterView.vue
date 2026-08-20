@@ -1,9 +1,10 @@
 <script setup>
-    import { ref, computed } from 'vue';
-    import { User, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-vue-next';
+    import { ref } from 'vue';
+    import { User, Mail, Lock, Eye, EyeOff } from 'lucide-vue-next';
     import { RouterLink } from 'vue-router';
     import { useRegister } from '../../composables/auth/useRegister.js';
     import ValidadorCampos from '../../components/registro/ValidadorCampos.vue';
+    import FloatingBackButton from '../../components/common/FloatingBackButton.vue';
 
     const {
         nombre,
@@ -22,39 +23,22 @@
 
     const mostrarPassword = ref(false);
     const mostrarConfirmPassword = ref(false);
-
 </script>
 
 <template>
-    <!-- Contenedor absoluto de pantalla completa -->
     <div class="min-h-screen w-full flex bg-white font-sans">
-        
-        <!-- MITAD IZQUIERDA: Imagen full-bleed nativa de Vite -->
         <div class="hidden lg:block lg:w-1/2 relative overflow-hidden">
-            <!-- Ponele el nombre de tu foto de registro acá -->
             <img 
                 src="../../assets/Fondo2.jpg" 
                 alt="Fondo registro" 
                 class="absolute inset-0 w-full h-full object-cover object-center"
                 loading="lazy"
             />
-            <!-- Filtro oscuro -->
             <div class="absolute inset-0 bg-black/20"></div>
         </div>
 
-        <!-- MITAD DERECHA: Formulario con scroll interno protegido -->
         <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16 overflow-y-auto relative">
-            
-            <!-- Botón Flotante para regresar a la Landing -->
-            <RouterLink 
-                to="/" 
-                class="absolute top-5 right-5 sm:top-8 sm:right-8 inline-flex items-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 bg-slate-100/90 hover:bg-[#00B4B4] text-slate-700 hover:text-white border border-slate-200/80 hover:border-[#00B4B4] rounded-2xl text-xs sm:text-sm font-black shadow-2xs hover:shadow-lg hover:shadow-teal-500/20 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 group z-20"
-            >
-                <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-white group-hover:bg-white/20 flex items-center justify-center text-slate-600 group-hover:text-white transition-colors flex-shrink-0 shadow-2xs">
-                    <ArrowLeft class="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:-translate-x-0.5 transition-transform" />
-                </div>
-                <span>Volver al Inicio</span>
-            </RouterLink>
+            <FloatingBackButton />
 
             <div class="w-full max-w-md py-8 my-auto pt-10 sm:pt-8">
                 

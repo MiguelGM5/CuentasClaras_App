@@ -7,8 +7,8 @@ import { resetAnimationState } from "../../utils/animationState";
 const token = ref(localStorage.getItem('token'));
 const user = ref(null);
 
-let temporizadorSesion = null; // La bomba por expiración de JWT
-let temporizadorInactividad = null; // El rastreador de que te fuiste a tomar mates
+let temporizadorSesion = null;
+let temporizadorInactividad = null;
 
 try {
     const savedUser = localStorage.getItem('user');
@@ -23,7 +23,7 @@ export function useAuth() {
     const userRole = computed(() => user.value?.rol ? String(user.value.rol) : '');
     const userProfile = computed(() => user.value);
 
-    // ── 1. CERRAR SESIÓN ──────────────────────────────────────
+    // Cierre de sesión
     const logoutSession = () => {
         resetAnimationState();
         token.value = null;
@@ -34,7 +34,7 @@ export function useAuth() {
         
         if (temporizadorSesion) clearTimeout(temporizadorSesion);
         if (temporizadorInactividad) clearTimeout(temporizadorInactividad);
-        apagarRastreadorInactividad(); // Dejamos de escuchar el mouse
+        apagarRastreadorInactividad();
     };
 
     const forzarCierreSeguridad = (mensaje = 'Tu sesión ha caducado por seguridad.') => {
@@ -43,11 +43,11 @@ export function useAuth() {
             .then(() => router.push('/login'));
     };
 
-    // ── 2. LA MAGIA DE LA INACTIVIDAD ─────────────────────────
-    const TIEMPO_LIMITE_INACTIVO = 45 * 60 * 1000; // 45 minutos (te avisa antes de que muera la hora)
+    // Control de inactividad
+    const TIEMPO_LIMITE_INACTIVO = 45 * 60 * 1000;
 
     const reiniciarRelojInactividad = () => {
-        if (!token.value) return; // Si no está logueado, no hacemos nada
+        if (!token.value) return;
         
         if (temporizadorInactividad) clearTimeout(temporizadorInactividad);
         
@@ -57,7 +57,6 @@ export function useAuth() {
     };
 
     const mostrarAlertaSiguesAhi = () => {
-        // Pausamos el rastreador para que mover el mouse no lo quite
         apagarRastreadorInactividad(); 
 
         Swal.fire({
@@ -79,10 +78,9 @@ export function useAuth() {
         });
     };
 
-    // ── 3. EXTENDER LA VIDA CON EL BACKEND ────────────────────
+    // Renovación de sesión con el backend
     const requestRenewedToken = async () => {
         try {
-            // Vamos al backend a pedir 1 hora más
             const res = await fetch(`${API_URL}/api/auth/refresh`, { 
                 headers: { 'Authorization': `Bearer ${token.value}` }
             });
@@ -91,13 +89,11 @@ export function useAuth() {
             
             const data = await res.json();
             
-            // Reemplazamos el token viejo por el nuevo
             token.value = data.token;
             localStorage.setItem('token', data.token);
 
             Swal.fire({ title: 'Sesión extendida', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
             
-            // Volvemos a armar todas las bombas de tiempo
             programarCierreSesion();
             encenderRastreadorInactividad();
 
@@ -106,16 +102,15 @@ export function useAuth() {
         }
     };
 
-    // ── 4. RASTREADORES DEL DOM (Mouse y Teclado) ─────────────
+    // Eventos de actividad de usuario
     const eventos = ['mousemove', 'keydown', 'scroll', 'click'];
     
-    // Usamos un throttle (freno) rudimentario para no saturar el navegador si mueven mucho el mouse
     let bloqueado = false;
     const detectorActividad = () => {
         if (bloqueado) return;
         reiniciarRelojInactividad();
         bloqueado = true;
-        setTimeout(() => bloqueado = false, 2000); // Solo actualiza el reloj cada 2 segundos máximo
+        setTimeout(() => bloqueado = false, 2000);
     };
 
     const encenderRastreadorInactividad = () => {
@@ -127,7 +122,7 @@ export function useAuth() {
         eventos.forEach(evt => window.removeEventListener(evt, detectorActividad));
     };
 
-    // ── 5. LA BOMBA ORIGINAL DEL JWT ──────────────────────────
+    // Verificación de expiración de JWT
     const programarCierreSesion = () => {
         if (!token.value) return;
         try {
@@ -146,7 +141,7 @@ export function useAuth() {
         }
     };
 
-    // ── 6. LOGIN EXPORT ───────────────────────────────────────
+    // Inicio de sesión
     const loginSession = (newToken, newUser) => {
         resetAnimationState();
         token.value = newToken;
@@ -155,7 +150,7 @@ export function useAuth() {
         localStorage.setItem('user', JSON.stringify(newUser));
         
         programarCierreSesion();
-        encenderRastreadorInactividad(); // Prendemos los radares
+        encenderRastreadorInactividad();
     };
 
     return {

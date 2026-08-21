@@ -7,22 +7,68 @@ import {
     Sparkles, FileSignature, Lock, CheckCircle2, Zap
 } from "lucide-vue-next";
 
-// ── NAVEGACIÓN Y SCROLL ──────────────────────────────────
+// ── NAVEGACIÓN Y SCROLL SPY (APPLE LIQUID GLASS) ─────────
 const scrolled = ref(false);
 const menuAbierto = ref(false);
+const seccionActiva = ref("");
 
-const onScroll = () => { 
-    scrolled.value = window.scrollY > 20; 
+const navItems = [
+    { id: "demo", label: "Cómo Funciona" },
+    { id: "simulador", label: "Simulador" },
+    { id: "features", label: "Herramientas" },
+    { id: "precios", label: "Precios" },
+    { id: "faq", label: "Preguntas" }
+];
+
+const actualizarScrollYSeccion = () => {
+    const scrollY = window.scrollY;
+    scrolled.value = scrollY > 20;
+
+    // Si está arriba en el hero
+    if (scrollY < 200) {
+        seccionActiva.value = "";
+        return;
+    }
+
+    // Scroll spy: verificar qué sección está actualmente en vista
+    const secciones = ["faq", "precios", "features", "simulador", "demo"];
+    for (const id of secciones) {
+        const el = document.getElementById(id);
+        if (el) {
+            const rect = el.getBoundingClientRect();
+            // Margen de detección para activar la pestaña correspondiente
+            if (rect.top <= 280 && rect.bottom >= 140) {
+                seccionActiva.value = id;
+                return;
+            }
+        }
+    }
 };
 
-onMounted(() => window.addEventListener("scroll", onScroll));
-onUnmounted(() => window.removeEventListener("scroll", onScroll));
+onMounted(() => {
+    window.addEventListener("scroll", actualizarScrollYSeccion, { passive: true });
+    actualizarScrollYSeccion();
+});
+
+onUnmounted(() => {
+    window.removeEventListener("scroll", actualizarScrollYSeccion);
+});
 
 const irA = (id) => {
     menuAbierto.value = false;
+    seccionActiva.value = id;
     const el = document.getElementById(id);
     if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
+        const offset = 85;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = el.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth"
+        });
     }
 };
 
@@ -129,12 +175,12 @@ const faqs = [
     <div class="min-h-screen bg-[#F8FAFC] font-sans antialiased text-slate-800 selection:bg-[#00B4B4]/20 selection:text-[#001D3D] overflow-x-hidden">
 
         <!-- ══════════════════════════════════════ -->
-        <!-- NAVBAR                                 -->
+        <!-- NAVBAR (APPLE LIQUID GLASS)            -->
         <!-- ══════════════════════════════════════ -->
         <header
             class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
             :class="scrolled 
-                ? 'bg-white/85 backdrop-blur-md shadow-xs border-b border-slate-200/70 py-3' 
+                ? 'bg-white/75 backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,29,61,0.06)] border-b border-white/60 py-3' 
                 : 'bg-transparent py-5'"
         >
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -158,37 +204,23 @@ const faqs = [
                     </div>
                 </RouterLink>
 
-                <!-- Enlaces de navegación desktop -->
-                <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 backdrop-blur-sm p-1.5 rounded-full border border-slate-200/60">
+                <!-- Enlaces de navegación desktop (Cápsula Apple Liquid Glass) -->
+                <nav class="hidden md:flex items-center gap-1 p-1.5 rounded-full bg-white/55 backdrop-blur-2xl border border-white/85 shadow-[0_8px_32px_rgba(0,29,61,0.08),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(255,255,255,1)] ring-1 ring-slate-900/5 transition-all duration-300">
                     <button 
-                        @click="irA('demo')" 
-                        class="text-xs font-bold text-slate-600 hover:text-[#001D3D] hover:bg-white px-4 py-2 rounded-full transition-all cursor-pointer"
+                        v-for="item in navItems"
+                        :key="item.id"
+                        @click="irA(item.id)" 
+                        class="relative px-4 py-2 rounded-full text-xs transition-all duration-300 flex items-center gap-2 cursor-pointer select-none"
+                        :class="seccionActiva === item.id
+                            ? 'bg-white text-[#001D3D] font-black shadow-[0_3px_14px_rgba(0,29,61,0.12),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_1px_rgba(255,255,255,1)] ring-1 ring-slate-900/5 scale-102'
+                            : 'text-slate-600 hover:text-[#001D3D] hover:bg-white/40 font-bold'"
                     >
-                        Cómo Funciona
-                    </button>
-                    <button 
-                        @click="irA('simulador')" 
-                        class="text-xs font-bold text-slate-600 hover:text-[#001D3D] hover:bg-white px-4 py-2 rounded-full transition-all cursor-pointer"
-                    >
-                        Simulador
-                    </button>
-                    <button 
-                        @click="irA('features')" 
-                        class="text-xs font-bold text-slate-600 hover:text-[#001D3D] hover:bg-white px-4 py-2 rounded-full transition-all cursor-pointer"
-                    >
-                        Herramientas
-                    </button>
-                    <button 
-                        @click="irA('precios')" 
-                        class="text-xs font-bold text-slate-600 hover:text-[#001D3D] hover:bg-white px-4 py-2 rounded-full transition-all cursor-pointer"
-                    >
-                        Precios
-                    </button>
-                    <button 
-                        @click="irA('faq')" 
-                        class="text-xs font-bold text-slate-600 hover:text-[#001D3D] hover:bg-white px-4 py-2 rounded-full transition-all cursor-pointer"
-                    >
-                        Preguntas
+                        <!-- Punto de Luz / Glow Activo Iluminado -->
+                        <span 
+                            v-if="seccionActiva === item.id" 
+                            class="w-1.5 h-1.5 rounded-full bg-[#00B4B4] shadow-[0_0_8px_#00B4B4,0_0_2px_#00B4B4] flex-shrink-0 animate-pulse"
+                        ></span>
+                        <span>{{ item.label }}</span>
                     </button>
                 </nav>
 
@@ -196,7 +228,7 @@ const faqs = [
                 <div class="hidden md:flex items-center gap-3">
                     <RouterLink 
                         to="/login"
-                        class="text-xs font-bold text-slate-600 hover:text-[#001D3D] px-4 py-2.5 rounded-xl hover:bg-slate-100 transition-all"
+                        class="text-xs font-bold text-slate-600 hover:text-[#001D3D] px-4 py-2.5 rounded-xl hover:bg-white/60 transition-all"
                     >
                         Iniciar Sesión
                     </RouterLink>
@@ -212,14 +244,14 @@ const faqs = [
                 <!-- Botón Hamburguesa Móvil -->
                 <button 
                     @click="menuAbierto = !menuAbierto" 
-                    class="md:hidden p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-700 shadow-xs cursor-pointer"
+                    class="md:hidden p-2.5 rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 text-slate-700 shadow-xs cursor-pointer"
                     aria-label="Abrir menú"
                 >
                     <component :is="menuAbierto ? X : Menu" :size="20" />
                 </button>
             </div>
 
-            <!-- Menú Desplegable Móvil -->
+            <!-- Menú Desplegable Móvil (Liquid Glass) -->
             <Transition
                 enter-active-class="transition duration-200 ease-out"
                 enter-from-class="opacity-0 -translate-y-4"
@@ -228,15 +260,25 @@ const faqs = [
                 leave-from-class="opacity-100 translate-y-0"
                 leave-to-class="opacity-0 -translate-y-4"
             >
-                <div v-if="menuAbierto" class="md:hidden bg-white border-b border-slate-200 px-6 py-5 space-y-3 shadow-xl">
-                    <button @click="irA('demo')" class="block w-full text-left text-sm font-bold text-slate-700 py-2">Cómo Funciona</button>
-                    <button @click="irA('simulador')" class="block w-full text-left text-sm font-bold text-slate-700 py-2">Simulador de Ahorro</button>
-                    <button @click="irA('features')" class="block w-full text-left text-sm font-bold text-slate-700 py-2">Herramientas</button>
-                    <button @click="irA('precios')"  class="block w-full text-left text-sm font-bold text-slate-700 py-2">Planes y Precios</button>
-                    <button @click="irA('faq')"  class="block w-full text-left text-sm font-bold text-slate-700 py-2">Preguntas Frecuentes</button>
+                <div v-if="menuAbierto" class="md:hidden bg-white/90 backdrop-blur-2xl border-b border-slate-200/80 px-6 py-5 space-y-2 shadow-2xl">
+                    <button 
+                        v-for="item in navItems"
+                        :key="item.id"
+                        @click="irA(item.id)" 
+                        class="w-full text-left text-sm py-2.5 px-4 rounded-2xl flex items-center justify-between transition-all"
+                        :class="seccionActiva === item.id 
+                            ? 'bg-[#001D3D] text-white font-black shadow-md shadow-slate-900/10' 
+                            : 'text-slate-700 hover:text-[#001D3D] font-bold hover:bg-slate-100/70'"
+                    >
+                        <span>{{ item.label }}</span>
+                        <span 
+                            v-if="seccionActiva === item.id" 
+                            class="w-2 h-2 rounded-full bg-[#00B4B4] shadow-[0_0_8px_#00B4B4]"
+                        ></span>
+                    </button>
                     
-                    <div class="pt-4 border-t border-slate-100 flex flex-col gap-2.5">
-                        <RouterLink to="/login" class="text-sm font-bold text-slate-700 py-3 px-4 rounded-xl border border-slate-200 text-center">
+                    <div class="pt-4 border-t border-slate-200/60 flex flex-col gap-2.5">
+                        <RouterLink to="/login" class="text-sm font-bold text-slate-700 py-3 px-4 rounded-xl border border-slate-200 text-center bg-white/50 hover:bg-white transition-all">
                             Iniciar Sesión
                         </RouterLink>
                         <RouterLink to="/registro" class="text-sm font-black text-white bg-gradient-to-r from-[#001D3D] to-[#00B4B4] py-3 px-4 rounded-xl text-center shadow-md">
@@ -1093,14 +1135,12 @@ const faqs = [
                         </ul>
                     </div>
 
-                    <!-- Cuenta y Legal -->
+                    <!-- Acceso Rápido -->
                     <div>
                         <p class="text-xs font-black text-white uppercase tracking-widest mb-4">Acceso</p>
                         <ul class="space-y-2.5 text-xs font-medium">
                             <li><RouterLink to="/registro" class="hover:text-white transition-colors">Crear Cuenta Gratis</RouterLink></li>
                             <li><RouterLink to="/login" class="hover:text-white transition-colors">Iniciar Sesión</RouterLink></li>
-                            <li><a href="#" class="hover:text-white transition-colors">Términos del Servicio</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">Política de Privacidad</a></li>
                         </ul>
                     </div>
 

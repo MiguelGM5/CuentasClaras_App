@@ -4,17 +4,17 @@ const Admin = {
   getAllUsuarios: async () => {
     const [rows] = await db.execute(
       `SELECT u.id,
-                    u.nombre,
-                    u.apellido_paterno  AS apellidoPaterno,
-                    u.apellido_materno  AS apellidoMaterno,
-                    u.email,
-                    u.status,
-                    DATE_FORMAT(u.createdAt, '%Y-%m-%d') AS fechaRegistro,
-                    r.nombre_rol        AS rol,
-                    r.id                AS rol_id
-             FROM usuarios u
-             INNER JOIN roles r ON u.rol_Id = r.id
-             ORDER BY u.createdAt DESC`,
+            	u.nombre,
+            	u.apellido_paterno  AS apellidoPaterno,
+            	u.apellido_materno  AS apellidoMaterno,
+            	u.email,
+            	u.status,
+            	DATE_FORMAT(u.createdAt, '%Y-%m-%d') AS fechaRegistro,
+            	r.nombre_rol        AS rol,
+            	r.id                AS rol_id
+            FROM usuarios u
+            INNER JOIN roles r ON u.rol_Id = r.id
+            ORDER BY u.createdAt DESC`,
     );
     return rows;
   },
